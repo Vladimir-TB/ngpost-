@@ -43,7 +43,9 @@ Current version: `v5.1.1` (Qt 6)
 - Qt 6 build script forces a clean rebuild for version/resource updates.
 
 ## Screenshots
-![ngPost+ Screenshot](pics/ngpost_plus_screenshot.png)
+<a href="pics/ngpost_plus_screenshot.png">
+  <img src="pics/ngpost_plus_screenshot.png" alt="ngPost+ Screenshot" width="900" />
+</a>
 
 ## Build (Windows)
 1. Install Qt 6.8.x + MSVC 2022.
@@ -112,7 +114,9 @@ Huidige versie: `v5.1.1` (Qt 6)
 - Qt 6-buildscript doet een schone rebuild bij versie/resource-updates.
 
 ## Screenshots
-![ngPost+ Screenshot](pics/ngpost_plus_screenshot.png)
+<a href="pics/ngpost_plus_screenshot.png">
+  <img src="pics/ngpost_plus_screenshot.png" alt="ngPost+ Screenshot" width="900" />
+</a>
 
 ## Build (Windows)
 1. Installeer Qt 6.8.x + MSVC 2022.
