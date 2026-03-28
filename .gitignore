@@ -19,5 +19,8 @@ qrc_resources.cpp
 *.log
 /aqtinstall.log
 
+# local config
+/ngPost.conf
+
 # qmake generated
 src/Makefile*
