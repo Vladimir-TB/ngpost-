@@ -62,8 +62,7 @@ Current version: `v5.1.1` (Qt 6)
 
 ## Release Notes
 - `release.md`
-- `release_notes.txt`
-- `release_notes_nl.txt`
+- `upstream_release_notes.txt`
 
 ## License
 - See `LICENSE`.
@@ -81,7 +80,7 @@ Gebaseerd op het originele ngPost-project van Max Bruel, met fixes, verfijningen
 Huidige versie: `v5.1.1` (Qt 6)
 
 ## Highlights
-- Snelle, strakke Qt 6-port met bijgewerkte build- en installer-scripts.
+- Snelle, strakke Qt 6-port met geüpdatete build- en installer-scripts.
 - Verbeterde usability voor post-workflows en wachtwoordgedrag.
 - Betere schaalbaarheid van de UI bij niet-hele DPI-waarden (o.a. 123% en 150%).
 - Betrouwbaardere config-opslag en credential-handling.
@@ -135,8 +134,7 @@ Huidige versie: `v5.1.1` (Qt 6)
 
 ## Release notes
 - `release.md`
-- `release_notes.txt`
-- `release_notes_nl.txt`
+- `upstream_release_notes.txt`
 
 ## License
 - Zie `LICENSE`.
