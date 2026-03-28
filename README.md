@@ -43,9 +43,7 @@ Current version: `v5.1.1` (Qt 6)
 - Qt 6 build script forces a clean rebuild for version/resource updates.
 
 ## Screenshots
-- `pics/ngPost_v4.3.png`
-- `pics/ngPost_v4.3_auto_fr.png`
-- `pics/ngPost_v4.3_monitor_fr.png`
+![ngPost+ Screenshot](pics/ngpost_plus_screenshot.png)
 
 ## Build (Windows)
 1. Install Qt 6.8.x + MSVC 2022.
@@ -62,7 +60,6 @@ Current version: `v5.1.1` (Qt 6)
 
 ## Release Notes
 - `release.md`
-- `upstream_release_notes.txt`
 
 ## License
 - See `LICENSE`.
@@ -115,9 +112,7 @@ Huidige versie: `v5.1.1` (Qt 6)
 - Qt 6-buildscript doet een schone rebuild bij versie/resource-updates.
 
 ## Screenshots
-- `pics/ngPost_v4.3.png`
-- `pics/ngPost_v4.3_auto_fr.png`
-- `pics/ngPost_v4.3_monitor_fr.png`
+![ngPost+ Screenshot](pics/ngpost_plus_screenshot.png)
 
 ## Build (Windows)
 1. Installeer Qt 6.8.x + MSVC 2022.
@@ -134,7 +129,6 @@ Huidige versie: `v5.1.1` (Qt 6)
 
 ## Release notes
 - `release.md`
-- `upstream_release_notes.txt`
 
 ## License
 - Zie `LICENSE`.

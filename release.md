@@ -41,7 +41,6 @@ Verwijderd:
 
 Opmerking:
 - Upstream heeft geen `v5.1.0`; deze baseline hoort bij ngPost+.
-- Upstream release notes staan volledig in `upstream_release_notes.txt` (t/m v4.16).
 
 ## Installer
 
