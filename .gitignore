@@ -1,0 +1,23 @@
+.qmake.stash
+*.o
+Makefile
+src/ngPost
+moc_*.cpp
+ui_*.h
+moc_predefs.h
+qrc_resources.cpp
+
+# build & dist
+/build-qt6/
+/dist-qt6/
+
+# local tooling
+/.qt/
+/.tools/
+
+# logs
+*.log
+/aqtinstall.log
+
+# qmake generated
+src/Makefile*
