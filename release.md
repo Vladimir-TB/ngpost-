@@ -17,6 +17,32 @@ Alle vernieuwingen uit `v5.1.0` blijven gewoon behouden.
 - `par2.exe` wordt nu meegeleverd in de Qt 6 distributie, en de koppeling tussen `maak par2` en de `%`-instelling in de GUI werkt beter.
 - De Qt 6 buildscript doet nu een schone rebuild voor versie- en resourcewijzigingen, zodat nieuwe versienummers en icoonupdates altijd correct in de exe terechtkomen.
 
+## Vernieuwingen t.o.v. originele ngPost (mbruel/ngPost) in v5.1.0 baseline
+
+Deze punten zijn toegevoegd of aangepast in ngPost+ t.o.v. upstream (v4.16) en vormen de basis van `v5.1.0`:
+
+Toevoegingen:
+- Donker/licht schakelaar in de GUI.
+- Thema‑kleurkiezer met reset‑knop.
+- Thema‑kleur wordt opgeslagen in `ngPost.conf` (`THEME_COLOR`) en herstelt bij start.
+- Inno Setup installer met Nederlandse voorwaarden/waarschuwing.
+- Automatische installatie van `vc_redist.x64.exe` als die ontbreekt.
+- Startmenu‑snelkoppeling + optionele desktop‑icoon.
+- SHA256 checksum bestand voor de installer.
+
+Wijzigingen:
+- Upgrade toolchain naar Qt 5.15.2.
+- GUI draait zonder zichtbare console (Windows subsystem).
+- About‑tekst opgeschoond en aangepast.
+- Taalondersteuning beperkt tot EN/DE/NL (NL standaard).
+
+Verwijderd:
+- Donatieknop en Bitcoin‑knoppen inclusief achterliggende code en assets.
+
+Opmerking:
+- Upstream heeft geen `v5.1.0`; deze baseline hoort bij ngPost+.
+- Upstream release notes staan volledig in `upstream_release_notes.txt` (t/m v4.16).
+
 ## Installer
 
 - Installerbestand:
