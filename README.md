@@ -1,6 +1,6 @@
-# ngPost Qt6 port
+# ngPost+
 
-Minimal Qt 6 port van ngPost.
+ngPost+ is an improved and modernized fork of ngPost, focused on performance, usability and reliability for Usenet posting. Based on the original ngPost project by Max Bruel, with further fixes, refinements and enhancements.
 
 ## Build (Windows)
 - Installeer Qt 6.8.x + MSVC 2022
