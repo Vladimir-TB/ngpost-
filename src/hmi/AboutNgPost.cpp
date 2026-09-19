@@ -49,7 +49,7 @@ AboutNgPost::AboutNgPost(NgPost *ngPost, QWidget *parent) :
     const QColor mutedText = pal.color(QPalette::PlaceholderText).isValid()
             ? pal.color(QPalette::PlaceholderText)
             : textColor.darker(130);
-    const QColor accentColor = pal.color(QPalette::Highlight);
+    const QColor accentColor = pal.color(QPalette::Link);
 
     setAttribute(Qt::WA_StyledBackground, true);
     setStyleSheet(QString(

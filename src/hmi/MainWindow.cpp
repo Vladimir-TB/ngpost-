@@ -55,8 +55,27 @@
 #include <QTimer>
 #include <QVBoxLayout>
 #include <QWindow>
+#include <cmath>
 
 namespace {
+QColor contrastingText(const QColor &background)
+{
+    auto linear = [](double channel) {
+        return channel <= 0.04045 ? channel / 12.92 : std::pow((channel + 0.055) / 1.055, 2.4);
+    };
+    const double luminance = 0.2126 * linear(background.redF())
+                           + 0.7152 * linear(background.greenF())
+                           + 0.0722 * linear(background.blueF());
+    return luminance > 0.179 ? Qt::black : Qt::white;
+}
+
+QColor themeTone(const QColor &accent, double saturation, double lightness)
+{
+    // Preserve the selected hue, including neutral grey/black/white themes.
+    return QColor::fromHslF(qMax(0.0f, accent.hslHueF()),
+                           accent.hslSaturationF() * saturation, lightness);
+}
+
 bool isColorDark(const QColor &color)
 {
     const int luminance = (color.red() * 299 + color.green() * 587 + color.blue() * 114) / 1000;
@@ -1430,16 +1449,16 @@ void MainWindow::_updateSettingsContentHints()
 QString MainWindow::_helpHtml() const
 {
     const QString appName = NgPost::displayName();
-    const bool darkMode = (_theme == Theme::Dark);
-    const QColor accent = currentAccentColor();
-    const QString bodyBg = darkMode ? "#0F1722" : "#F8FBFF";
-    const QString cardBg = darkMode ? "#182434" : "#FFFFFF";
-    const QString textColor = darkMode ? "#EAF2FB" : "#1C2733";
-    const QString mutedColor = darkMode ? "#B9CAD9" : "#55667A";
-    const QString borderColor = darkMode ? "#36506A" : "#C7D7E6";
-    const QString codeBg = darkMode ? "#111C29" : "#EEF4FB";
-    const QString noteBg = darkMode ? "#17364C" : "#E6F5FF";
-    const QString noteBorder = darkMode ? "#3EC9C1" : accent.name();
+    const QPalette pal = qApp->palette();
+    const QColor accent = pal.color(QPalette::Link);
+    const QString bodyBg = pal.color(QPalette::Window).name();
+    const QString cardBg = pal.color(QPalette::Button).name();
+    const QString textColor = pal.color(QPalette::WindowText).name();
+    const QString mutedColor = pal.color(QPalette::PlaceholderText).name();
+    const QString borderColor = pal.color(QPalette::Mid).name();
+    const QString codeBg = pal.color(QPalette::Base).name();
+    const QString noteBg = pal.color(QPalette::AlternateBase).name();
+    const QString noteBorder = accent.name();
     const QString codeStyle = QString("background:%1; border:1px solid %2; border-radius:4px; padding:1px 4px;")
                                   .arg(codeBg, borderColor);
     const QString settingsLabel = tr("Settings");
@@ -1582,9 +1601,9 @@ QString MainWindow::_overviewGuideHtml() const
     const QString archiver = hasArchiver
         ? QFileInfo(_ngPost->_rarPath).fileName()
         : tr("none detected yet");
-    const QString textColor = (_theme == Theme::Dark) ? "#EAF2FB" : "#1C2733";
-    const QString mutedColor = (_theme == Theme::Dark) ? "#B8C8D8" : "#526171";
-    const QString accentColor = currentAccentColor().name();
+    const QString textColor = qApp->palette().color(QPalette::WindowText).name();
+    const QString mutedColor = qApp->palette().color(QPalette::PlaceholderText).name();
+    const QString accentColor = qApp->palette().color(QPalette::Link).name();
 
     QString html;
     html += QString("<div style='font-size:10pt; line-height:1.6; color:%1;'>").arg(textColor);
@@ -2695,7 +2714,7 @@ void MainWindow::applyTheme(Theme theme)
     _ui->themeButton->show();
 
     const QColor accent = currentAccentColor();
-    const QColor accentText = qGray(accent.rgb()) > 150 ? Qt::black : Qt::white;
+    const QColor accentText = contrastingText(accent);
     QString appStyle = _defaultAppStyleSheet;
     QColor shellBgStart;
     QColor shellBgEnd;
@@ -2722,82 +2741,55 @@ void MainWindow::applyTheme(Theme theme)
     if (style)
         qApp->setStyle(style);
 
+    const bool dark = _theme == Theme::Dark;
+    auto tone = [&](double saturation, double darkLightness, double lightLightness) {
+        return themeTone(accent, saturation, dark ? darkLightness : lightLightness);
+    };
+    shellBgStart = tone(0.55, 0.055, 0.96);
+    shellBgEnd = tone(0.50, 0.13, 0.90);
+    railColor = tone(0.48, 0.10, 0.96);
+    railEndColor = tone(0.52, 0.16, 0.88);
+    panelColor = tone(0.42, 0.12, 0.94);
+    cardColor = tone(0.38, 0.15, 0.97);
+    borderColor = tone(0.35, 0.32, 0.73);
+    strongTextColor = tone(0.18, 0.95, 0.10);
+    mutedTextColor = tone(0.16, 0.76, 0.34);
+    inputBgColor = tone(0.42, 0.085, 0.985);
+    inputBorderColor = tone(0.32, 0.40, 0.63);
+    heroStartColor = tone(0.62, 0.17, 0.87);
+    heroEndColor = tone(0.52, 0.23, 0.93);
+    progressBgColor = tone(0.40, 0.075, 0.90);
+    const QColor gradientTarget = accentText == QColor(Qt::black) ? Qt::white : Qt::black;
+    accentAltColor = blendColor(accent, gradientTarget, 0.12);
+    // Action buttons belong to the theme; actual error/status indicators retain their meaning.
+    successColor = accent;
+    successAltColor = accentAltColor;
+    dangerColor = accent;
+    const QColor accentLabelColor = blendColor(accent, strongTextColor, 0.70);
+
     QPalette pal = _defaultPalette;
-    if (_theme == Theme::Dark)
-    {
-        pal.setColor(QPalette::Window, QColor(13, 20, 30));
-        pal.setColor(QPalette::WindowText, QColor(235, 244, 252));
-        pal.setColor(QPalette::Base, QColor(16, 25, 38));
-        pal.setColor(QPalette::AlternateBase, QColor(23, 35, 50));
-        pal.setColor(QPalette::ToolTipBase, QColor(24, 37, 56));
-        pal.setColor(QPalette::ToolTipText, QColor(235, 244, 252));
-        pal.setColor(QPalette::Text, QColor(235, 244, 252));
-        pal.setColor(QPalette::Button, QColor(24, 37, 56));
-        pal.setColor(QPalette::ButtonText, QColor(235, 244, 252));
-        pal.setColor(QPalette::Highlight, accent);
-        pal.setColor(QPalette::Link, accent);
-        pal.setColor(QPalette::HighlightedText, accentText);
-        pal.setColor(QPalette::PlaceholderText, QColor(171, 188, 206));
-        pal.setColor(QPalette::Disabled, QPalette::WindowText, QColor(137, 153, 173));
-        pal.setColor(QPalette::Disabled, QPalette::Text, QColor(137, 153, 173));
-        pal.setColor(QPalette::Disabled, QPalette::ButtonText, QColor(137, 153, 173));
-
-        shellBgStart = QColor(7, 14, 23);
-        shellBgEnd = QColor(20, 31, 47);
-        railColor = QColor(17, 28, 42);
-        railEndColor = QColor(22, 36, 54);
-        panelColor = QColor(18, 30, 44);
-        cardColor = QColor(24, 37, 56);
-        borderColor = QColor(58, 84, 111);
-        strongTextColor = QColor(235, 244, 252);
-        mutedTextColor = QColor(182, 198, 214);
-        inputBgColor = QColor(11, 19, 30);
-        inputBorderColor = QColor(70, 99, 128);
-        heroStartColor = QColor(18, 55, 92);
-        heroEndColor = QColor(17, 97, 94);
-        progressBgColor = QColor(12, 20, 31);
-        accentAltColor = QColor(44, 199, 194);
-        successColor = QColor(19, 171, 120);
-        successAltColor = QColor(25, 198, 138);
-        dangerColor = QColor(221, 88, 123);
-        _ui->themeButton->setText(tr("Dark mode"));
-    }
-    else
-    {
-        pal.setColor(QPalette::Window, QColor(236, 241, 246));
-        pal.setColor(QPalette::WindowText, QColor(21, 31, 42));
-        pal.setColor(QPalette::Base, QColor(255, 255, 255));
-        pal.setColor(QPalette::AlternateBase, QColor(244, 247, 250));
-        pal.setColor(QPalette::ToolTipBase, QColor(255, 255, 255));
-        pal.setColor(QPalette::ToolTipText, QColor(21, 31, 42));
-        pal.setColor(QPalette::Text, QColor(21, 31, 42));
-        pal.setColor(QPalette::Button, QColor(255, 255, 255));
-        pal.setColor(QPalette::ButtonText, QColor(21, 31, 42));
-        pal.setColor(QPalette::Highlight, accent);
-        pal.setColor(QPalette::Link, accent);
-        pal.setColor(QPalette::HighlightedText, accentText);
-        pal.setColor(QPalette::PlaceholderText, QColor(101, 118, 136));
-
-        shellBgStart = QColor(242, 248, 255);
-        shellBgEnd = QColor(229, 239, 251);
-        railColor = QColor(250, 252, 255);
-        railEndColor = QColor(229, 242, 255);
-        panelColor = QColor(241, 247, 253);
-        cardColor = QColor(255, 255, 255);
-        borderColor = QColor(192, 205, 220);
-        strongTextColor = QColor(21, 31, 42);
-        mutedTextColor = QColor(85, 99, 114);
-        inputBgColor = QColor(255, 255, 255);
-        inputBorderColor = QColor(176, 191, 208);
-        heroStartColor = QColor(212, 234, 255);
-        heroEndColor = QColor(216, 247, 241);
-        progressBgColor = QColor(232, 240, 248);
-        accentAltColor = QColor(0, 181, 173);
-        successColor = QColor(14, 163, 116);
-        successAltColor = QColor(12, 188, 134);
-        dangerColor = QColor(205, 66, 99);
-        _ui->themeButton->setText(tr("Light mode"));
-    }
+    pal.setColor(QPalette::Window, panelColor);
+    pal.setColor(QPalette::WindowText, strongTextColor);
+    pal.setColor(QPalette::Base, inputBgColor);
+    pal.setColor(QPalette::AlternateBase, cardColor);
+    pal.setColor(QPalette::ToolTipBase, cardColor);
+    pal.setColor(QPalette::ToolTipText, strongTextColor);
+    pal.setColor(QPalette::Text, strongTextColor);
+    pal.setColor(QPalette::Button, cardColor);
+    pal.setColor(QPalette::ButtonText, strongTextColor);
+    pal.setColor(QPalette::Highlight, accent);
+    pal.setColor(QPalette::HighlightedText, accentText);
+    pal.setColor(QPalette::Link, accentLabelColor);
+    pal.setColor(QPalette::LinkVisited, accentLabelColor);
+    pal.setColor(QPalette::PlaceholderText, mutedTextColor);
+    pal.setColor(QPalette::Light, tone(0.25, 0.36, 0.99));
+    pal.setColor(QPalette::Midlight, tone(0.30, 0.26, 0.90));
+    pal.setColor(QPalette::Mid, borderColor);
+    pal.setColor(QPalette::Dark, tone(0.35, 0.07, 0.50));
+    pal.setColor(QPalette::Shadow, tone(0.30, 0.025, 0.32));
+    for (QPalette::ColorRole role : {QPalette::WindowText, QPalette::Text, QPalette::ButtonText})
+        pal.setColor(QPalette::Disabled, role, mutedTextColor);
+    _ui->themeButton->setText(dark ? tr("Dark mode") : tr("Light mode"));
     qApp->setPalette(pal);
 
     QFont appFont = _defaultAppFont;
@@ -2830,15 +2822,15 @@ void MainWindow::applyTheme(Theme theme)
     const QString primaryGradient = QString("qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 %1, stop:1 %2)")
                                         .arg(accent.name(), accentAltColor.name());
     const QString primaryHoverGradient = QString("qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 %1, stop:1 %2)")
-                                             .arg(accent.lighter(115).name(), accentAltColor.lighter(112).name());
+                                             .arg(blendColor(accent, gradientTarget, 0.08).name(), blendColor(accentAltColor, gradientTarget, 0.08).name());
     const QString successGradient = QString("qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 %1, stop:1 %2)")
                                         .arg(successColor.name(), successAltColor.name());
     const QString successHoverGradient = QString("qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 %1, stop:1 %2)")
-                                             .arg(successColor.lighter(112).name(), successAltColor.lighter(110).name());
+                                        .arg(blendColor(successColor, gradientTarget, 0.08).name(), blendColor(successAltColor, gradientTarget, 0.08).name());
     const QString dangerGradient = QString("qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 %1, stop:1 %2)")
-                                       .arg(dangerColor.name(), dangerColor.lighter(118).name());
+                                       .arg(dangerColor.name(), accentAltColor.name());
     const QString dangerHoverGradient = QString("qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 %1, stop:1 %2)")
-                                            .arg(dangerColor.lighter(110).name(), dangerColor.lighter(128).name());
+                                            .arg(blendColor(dangerColor, gradientTarget, 0.08).name(), blendColor(accentAltColor, gradientTarget, 0.08).name());
     const QString groupStyle = QString(
         "QGroupBox {"
          " font: 600 9.5pt 'Segoe UI';"
@@ -2855,7 +2847,7 @@ void MainWindow::applyTheme(Theme theme)
         " color: %3;"
         " background: transparent;"
         "}")
-        .arg(borderColor.name(), cardColor.name(), accent.name());
+        .arg(borderColor.name(), cardColor.name(), accentLabelColor.name());
 
     const QString tabStyle = QString(
         "QTabWidget::pane { border: none; background: transparent; top: -1px; }"
@@ -2871,7 +2863,7 @@ void MainWindow::applyTheme(Theme theme)
         " font: 600 8pt 'Segoe UI';"
         "}"
         "QTabBar::tab:selected { background: %4; border-color: %5; color: %6; }"
-        "QTabBar::tab:hover { background: %7; border-color: %5; color: %6; }"
+        "QTabBar::tab:!selected:hover { background: %7; border-color: %5; color: %3; }"
         "QTabBar::tab:!selected { margin-top: 2px; }"
         "QTabBar::close-button { image: url(:/icons/clear.png); width: 10px; height: 10px; margin-left: 6px; }"
         "QTabBar::close-button:hover { background: %7; border-radius: 6px; }"
@@ -2921,7 +2913,7 @@ void MainWindow::applyTheme(Theme theme)
         " font: 600 7.7pt 'Segoe UI';"
         "}"
         "QPushButton[shellRole=\"nav\"]:hover { background-color: %6; border-color: %4; color: %7; }"
-        "QPushButton[shellRole=\"nav\"]:checked { background: %8; border-color: %9; color: %7; }"
+        "QPushButton[shellRole=\"nav\"]:checked { background: %8; border-color: %9; color: %11; }"
         "QPushButton[shellRole=\"utility\"] {"
         " background: %10;"
         " border: 1px solid %9;"
@@ -2967,7 +2959,7 @@ void MainWindow::applyTheme(Theme theme)
         "QFrame#sessionStatusBar { border-radius: 14px; }"
         "QLabel[shellRole=\"brand\"] { color: %7; font: 700 14pt 'Bahnschrift SemiBold'; }"
         "QLabel[shellRole=\"versionBadge\"] {"
-        " color: %7;"
+        " color: %11;"
         " background: %8;"
         " border: 1px solid %9;"
         " border-radius: 8px;"
@@ -2980,7 +2972,7 @@ void MainWindow::applyTheme(Theme theme)
         "QLabel[shellRole=\"workspaceSubtitle\"],"
         "QLabel[shellRole=\"guideBody\"] { color: %5; }"
         "QLabel[shellRole=\"cardTitle\"] { color: %5; font: 600 6.8pt 'Segoe UI'; }"
-        "QLabel[shellRole=\"heroEyebrow\"] { color: %9; font: 700 8.5pt 'Segoe UI'; }"
+        "QLabel[shellRole=\"heroEyebrow\"] { color: %7; font: 700 8.5pt 'Segoe UI'; }"
         "QLabel[shellRole=\"heroTitle\"] { color: %7; font: 700 19pt 'Bahnschrift SemiBold'; }"
         "QLabel[shellRole=\"sectionTitle\"],"
         "QLabel[shellRole=\"workspaceTitle\"] { color: %7; font: 700 13pt 'Segoe UI'; }"
@@ -3070,7 +3062,7 @@ void MainWindow::applyTheme(Theme theme)
         " border-radius: 8px;"
         " font: 600 7.6pt 'Segoe UI';"
         "}"
-        "QProgressBar::chunk { background-color: %9; border-radius: 8px; }"
+        "QProgressBar::chunk { background-color: %19; border-radius: 8px; }"
         "QSplitter::handle { background: transparent; }"
         "QSplitter#workspaceSplitter::handle:vertical { height: 0px; }"
         "QSplitter#workspaceSplitter::handle:horizontal {"
@@ -3097,7 +3089,8 @@ void MainWindow::applyTheme(Theme theme)
              heroEndColor.name(),
              inputBgColor.name(),
              inputBorderColor.name(),
-             progressBgColor.name());
+             progressBgColor.name(),
+             blendColor(progressBgColor, accent, 0.25).name());
 
     const QString buttonStyle = QString(
         "QPushButton {"
@@ -3234,12 +3227,12 @@ void MainWindow::applyTheme(Theme theme)
         " border-left-color: %6;"
         "}"
         "QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {"
-        " image: url(:/icons/spin_plus.svg);"
+        " image: url(:/icons/spin_plus%7.svg);"
         " width: 10px;"
         " height: 10px;"
         "}"
         "QSpinBox::down-arrow, QDoubleSpinBox::down-arrow {"
-        " image: url(:/icons/spin_minus.svg);"
+        " image: url(:/icons/spin_minus%7.svg);"
         " width: 10px;"
         " height: 10px;"
         "}")
@@ -3248,7 +3241,8 @@ void MainWindow::applyTheme(Theme theme)
              blendColor(accentAltColor, borderColor, 0.35).name(),
              primaryHoverGradient,
              blendColor(cardColor, borderColor, 0.22).name(),
-             inputBorderColor.name());
+             inputBorderColor.name(),
+             accentText == QColor(Qt::black) ? "_dark" : "");
 
     appStyle += "\n";
     appStyle += scaledStyleText(shellStyle, _uiScale);
@@ -3281,7 +3275,7 @@ QColor MainWindow::currentAccentColor() const
 void MainWindow::updateThemeColorButton()
 {
     const QColor accent = currentAccentColor();
-    const QString textColor = qGray(accent.rgb()) > 150 ? "#000000" : "#FFFFFF";
+    const QString textColor = contrastingText(accent).name();
     _ui->themeColorButton->setText(accent.name().toUpper());
     _ui->themeColorButton->setStyleSheet(
         QString("QPushButton { background-color: %1; color: %2; border: 1px solid %2; padding: 4px 10px; }")

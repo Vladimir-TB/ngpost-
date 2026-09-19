@@ -8,6 +8,7 @@
 #include <QPushButton>
 #include <QScrollArea>
 #include <QTimer>
+#include <cmath>
 #include <iostream>
 #include <stdexcept>
 
@@ -36,6 +37,32 @@ static QByteArray readFile(const QString &path)
     QFile file(path);
     require(file.open(QIODevice::ReadOnly), "Cannot read test config");
     return file.readAll();
+}
+
+static double contrast(const QColor &first, const QColor &second)
+{
+    auto luminance = [](const QColor &color) {
+        auto linear = [](double value) { return value <= 0.04045 ? value / 12.92 : std::pow((value + 0.055) / 1.055, 2.4); };
+        return 0.2126 * linear(color.redF()) + 0.7152 * linear(color.greenF()) + 0.0722 * linear(color.blueF());
+    };
+    const double a = luminance(first), b = luminance(second);
+    return (qMax(a, b) + 0.05) / (qMin(a, b) + 0.05);
+}
+
+static void chooseColor(QPushButton *pick, const QColor &color)
+{
+    bool opened = false;
+    QTimer::singleShot(0, [&]() {
+        for (QWidget *widget : QApplication::topLevelWidgets())
+            if (auto *dialog = qobject_cast<QColorDialog *>(widget))
+            {
+                opened = true;
+                dialog->setCurrentColor(color);
+                dialog->accept();
+            }
+    });
+    pick->click();
+    require(opened, "Picker did not open during theme matrix");
 }
 
 int main(int argc, char *argv[])
@@ -76,6 +103,48 @@ int main(int argc, char *argv[])
 
         if (!restart)
         {
+            for (const QString &hex : {"#AD37C9", "#E53935", "#20C060", "#126BDB", "#808080", "#000000", "#FFFFFF", "#FFFF00"})
+            {
+                const QColor color(hex);
+                chooseColor(pick, color);
+                for (bool dark : {true, false})
+                {
+                    if (mode->isChecked() != dark)
+                        mode->click();
+                    QApplication::processEvents();
+                    const QPalette pal = qApp->palette();
+                    for (QPalette::ColorRole role : {QPalette::Window, QPalette::Base, QPalette::Button, QPalette::Mid})
+                    {
+                        const QColor surface = pal.color(role);
+                        if (color.hslSaturationF() > 0.1)
+                            require(qAbs(surface.hslHueF() - color.hslHueF()) < 0.02, "UI surface retained a foreign hue");
+                        else
+                            require(surface.hslSaturationF() < 0.02, "Neutral theme retained colored surfaces");
+                    }
+                    require(contrast(pal.color(QPalette::WindowText), pal.color(QPalette::Window)) >= 4.5, "Window text contrast failed");
+                    require(contrast(pal.color(QPalette::Text), pal.color(QPalette::Base)) >= 4.5, "Input text contrast failed");
+                    require(contrast(pal.color(QPalette::PlaceholderText), pal.color(QPalette::Button)) >= 4.5, "Muted text contrast failed");
+                    require(contrast(pal.color(QPalette::Link), pal.color(QPalette::Button)) >= 4.5, "Link contrast failed");
+                    require(contrast(pal.color(QPalette::HighlightedText), pal.color(QPalette::Highlight)) >= 4.5, "Selection contrast failed");
+                    if (hex == "#AD37C9" || hex == "#20C060")
+                    {
+                        const QString prefix = hex.mid(1) + (dark ? "-dark" : "-light");
+                        scroll->ensureWidgetVisible(pick);
+                        pick->window()->grab().save(QDir(directory).filePath(prefix + "-preferences.png"));
+                        for (const QString &name : {"overviewNavButton", "quickNavButton", "autoNavButton", "activityNavButton"})
+                        {
+                            auto *nav = window->findChild<QPushButton *>(name);
+                            require(nav, "Navigation button missing");
+                            nav->click();
+                            QApplication::processEvents();
+                            window->grab().save(QDir(directory).filePath(prefix + "-" + name + ".png"));
+                        }
+                    }
+                }
+            }
+            if (!mode->isChecked())
+                mode->click();
+            std::cout << "PASS: 8 colors x light/dark; all surface hues and text contrast; four views rendered\n";
             bool dialogFound = false;
             QTimer::singleShot(0, [&]() {
                 for (QWidget *widget : QApplication::topLevelWidgets())

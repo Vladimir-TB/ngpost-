@@ -1,22 +1,25 @@
 # Actuele projectstatus
 
-Datum: **19 september 2026**. Fase: lokaal UI-herstel. Opleverstatus: **colorpicker hersteld en lokaal gebouwd; geen nieuwe installerrelease**.
+Datum: **19 september 2026**. Fase: volledig instelbaar UI-thema. Opleverstatus: **hele UI kleurt mee, lokaal gebouwd en getest; geen nieuwe installerrelease**.
 
 ## Gereed
 - De kleurkiezer en Reset zijn weer bereikbaar via **Voorkeuren → Themakleur**, onderaan naast de taal- en thema-instellingen. Scroll zo nodig omlaag.
-- De gekozen accentkleur wordt toegepast in licht en donker, automatisch opgeslagen en bij starten teruggeladen. Annuleren behoudt de bestaande kleur. Reset herstelt `#0A66C2`.
-- Ook de algemene knop Opslaan bewaart `THEME_COLOR`. Lichte accentkleuren krijgen donkere selectietekst.
+- De gekozen kleur bepaalt het volledige lichte of donkere thema: achtergronden, panelen, invoervelden, knoppen, randen, menu's, Voorkeuren, serverinstellingen en hulpvensters. De vaste blauw/turquoise/groene decoratie is vervangen door tinten van de gekozen kleur. Grijs, zwart en wit geven een neutraal thema.
+- De kleur wordt automatisch opgeslagen en bij starten teruggeladen. Annuleren behoudt de bestaande kleur. Reset herstelt het blauwe thema (`#0A66C2`).
+- Ook de algemene knop Opslaan bewaart `THEME_COLOR`. Tekst, geselecteerde knoppen en plus/min-symbolen passen hun contrast aan. Echte fout- en postingstatussen behouden hun betekenis.
 - Lokale app: [dist-qt6/ngPost.exe](dist-qt6/ngPost.exe). Bronversie blijft `5.1.1`; Windows-bestandsversie is nog `0.0.0.0`.
-- Bronbasis: `11af4b5`. Herstel, gerichte regressiecheck en dit statusdocument horen bij de commit `Restore theme color picker in Preferences`.
+- Bronbasis: colorpicker-herstel `0ddd5ae`. De uitbreiding naar de gehele UI, regressiecontrole en deze status horen bij de commit `Apply selected theme color throughout the UI`.
 
 ## Bewezen/getest
 - Qt 6.8.3/MSVC releasebuild geslaagd.
 - [tests/run-colorpicker-smoke.ps1](tests/run-colorpicker-smoke.ps1) slaagt: zichtbaarheid, kleurvenster via knop, bestaande kleur laden, kiezen, annuleren, licht/donker, selectietekstcontrast en algemene configuratieopslag.
+- Acht kleuren (paars, rood, groen, blauw, grijs, zwart, wit en geel), elk in licht en donker, slagen: achtergronden, invoervelden, knoppen en randen volgen dezelfde tint; gemeten paletcontrast voor gewone tekst, invoer, secundaire tekst, links en selectie is minimaal 4,5:1.
 - Tweede testproces bewijst terugladen na herstart en resetten inclusief opslag. Tests linken de gebouwde productieobjecten en gebruiken uitsluitend een eigen portable-configuratie onder `artifacts/`.
-- Voorkeuren visueel gecontroleerd via Qt-rendering. Dit is een offscreen UI-smokecheck, geen handmatige test van het native Windows-kleurvenster.
+- Hoofdscherm, Snel posten, Automatisch posten en Voorkeuren visueel gecontroleerd met paarse/donkere en groene/lichte Qt-renderingen. Dit is een offscreen UI-smokecheck, geen handmatige test van het native Windows-kleurvenster.
 - Logs: [build](artifacts/colorpicker/build.log), [UI-smoke](artifacts/colorpicker/smoke.log), [herstart](artifacts/colorpicker/restart.log). [UI-beeld](artifacts/colorpicker/smoke-build/release/preferences-default.png).
-- Build- en distributie-executable hebben dezelfde SHA-256: `F27FF724F4C75427505CABEE04CCE50E3DDA87AD6DDAC2A5FB95708538A336A5`.
-- Oude executable bewaard in [backup](artifacts/colorpicker/backup-20260919-134701/ngPost.exe); oude SHA-256: `0ABEC02AF7448D7B86A0797EA13B14C4F77144ABC548772C3D8CB8D2A5BB6CD3`.
+- Voorbeelden: [paars/donker](artifacts/colorpicker/smoke-build/release/AD37C9-dark-overviewNavButton.png), [groen/licht](artifacts/colorpicker/smoke-build/release/20C060-light-autoNavButton.png).
+- Build- en distributie-executable hebben dezelfde SHA-256: `57403355E8DDF0000BDD6B13A3849FE32102747C6852E805D6D83C441A2BC0E1`.
+- Vorige executable bewaard in [backup](artifacts/colorpicker/backup-20260919-135618/ngPost.exe); oude SHA-256: `F27FF724F4C75427505CABEE04CCE50E3DDA87AD6DDAC2A5FB95708538A336A5`.
 
 ## Resteert / bewust uitgesteld
 - Start de bijgewerkte lokale app om de kleurkeuze zelf te bekijken. Een reeds geïnstalleerde versie elders op Windows is niet bijgewerkt.
