@@ -7,6 +7,13 @@ Based on the original ngPost project by Max Bruel, with fixes, refinements and e
 
 Current version: `v5.1.1` (Qt 6)
 
+## Actuele lokale status en resultaat
+- [STATUS.md](STATUS.md) is de actuele bron voor wijzigingen, controlebewijs en resterend werk.
+- Start de lokale app via [dist-qt6/ngPost.exe](dist-qt6/ngPost.exe).
+- De kleurkiezer staat onder **Voorkeuren → Themakleur**, onderaan bij Taal en de licht/donkerknop. Scroll zo nodig omlaag. Klik op het kleurvak; **Reset** herstelt het standaardblauw.
+- Indeling: `src/` bevat productcode en vertalingen; `tests/` bevat de gerichte UI-smokecheck; `pics/` bevat documentatiebeelden; `installer/` bevat installerbron; `build-qt6/` is buildstaging; `artifacts/` bevat technische logs, testconfiguraties, screenshots en backups; `dist-qt6/` bevat de lokale uitvoerbare app en bestaande installerpakketten; `.qt/` en `.tools/` zijn lokale hulpmiddelen.
+- Herhaal de colorpicker-controle met `./tests/run-colorpicker-smoke.ps1`. De test gebruikt uitsluitend een eigen configuratie onder `artifacts/`.
+
 ## Highlights
 - Faster, cleaner Qt 6 port with updated build and installer scripts.
 - Improved usability for posting workflows and password handling.

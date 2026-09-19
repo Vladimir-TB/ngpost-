@@ -2675,6 +2675,9 @@ void NgPost::saveConfig()
                << tr("## UI theme mode (LIGHT or DARK in the current GUI)") << "\n"
                << (_themeMode.isEmpty() ? "#THEME_MODE = LIGHT\n" : QString("THEME_MODE = %1\n").arg(_themeMode.toUpper()))
                << "\n"
+               << "## UI theme accent color (hex, e.g. #1E90FF)\n"
+               << (_themeColor.isEmpty() ? "#THEME_COLOR = #1E90FF\n" : QString("THEME_COLOR = %1\n").arg(_themeColor))
+               << "\n"
                << tr("## UI scale percentage for the current GUI (100, 110, 123 or 150)") << "\n"
                << (qFuzzyCompare(_uiScale, 1.0) ? "#UI_SCALE = 100\n" : QString("UI_SCALE = %1\n").arg(qRound(_uiScale * 100.0)))
                << "\n"

@@ -374,6 +374,7 @@ void MainWindow::init(NgPost *ngPost)
 //    connect(_ui->goCmdButton, &QAbstractButton::clicked, _ngPost, &NgPost::onGoCMD, Qt::QueuedConnection);
 
     _theme = _ngPost->_themeMode.compare("light", Qt::CaseInsensitive) == 0 ? Theme::Light : Theme::Dark;
+    _accentColor = QColor(_ngPost->_themeColor);
     _uiScale = qBound(1.0, _ngPost->_uiScale > 0.0 ? _ngPost->_uiScale : 1.0, 1.5);
 
     updateProgressBar(0, 0);
@@ -726,10 +727,8 @@ void MainWindow::_initPostingBox()
     connect(_ui->autoCompressCB,    &QAbstractButton::toggled, this, &MainWindow::onAutoCompressToggled);
     connect(_ui->rarPassEdit,       &QLineEdit::textChanged,   this, &MainWindow::onRarPassUpdated);
     connect(_ui->themeButton,       &QAbstractButton::toggled, this, &MainWindow::onThemeToggled);
-
-    _ui->themeColorLbl->hide();
-    _ui->themeColorButton->hide();
-    _ui->themeColorResetButton->hide();
+    connect(_ui->themeColorButton,  &QAbstractButton::clicked, this, &MainWindow::onThemeColorClicked);
+    connect(_ui->themeColorResetButton, &QAbstractButton::clicked, this, &MainWindow::onThemeColorResetClicked);
     _ui->themeButton->setEnabled(true);
     _ui->themeButton->show();
     _ui->genPoster->setText(tr("Gen."));
@@ -816,6 +815,8 @@ void MainWindow::_rebuildPreferencesLayout()
     _ui->nzbPathEdit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     _ui->nzbPathButton->setMinimumWidth(116);
     _ui->themeButton->setMinimumWidth(136);
+    _ui->themeColorButton->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+    _ui->themeColorButton->setMinimumSize(116, 30);
     _ui->saveButton->setMinimumWidth(136);
     _ui->langCB->setMinimumWidth(110);
     _ui->articleSizeEdit->setMaximumWidth(96);
@@ -910,6 +911,16 @@ void MainWindow::_rebuildPreferencesLayout()
     actionsLayout->addWidget(_ui->saveButton);
     outputLayout->addWidget(actionsWidget, 2, 2);
 
+    outputLayout->addWidget(_ui->themeColorLbl, 3, 0);
+    QWidget *colorWidget = new QWidget(outputWidget);
+    QHBoxLayout *colorLayout = new QHBoxLayout(colorWidget);
+    colorLayout->setContentsMargins(0, 0, 0, 0);
+    colorLayout->setSpacing(10);
+    colorLayout->addWidget(_ui->themeColorButton);
+    colorLayout->addWidget(_ui->themeColorResetButton);
+    colorLayout->addStretch(1);
+    outputLayout->addWidget(colorWidget, 3, 1, 1, 2);
+
     rootLayout->addWidget(outputWidget);
     rootLayout->addStretch(1);
 
@@ -945,6 +956,9 @@ void MainWindow::_rebuildPreferencesLayout()
         _ui->langLbl,
         _ui->langCB,
         _ui->themeButton,
+        _ui->themeColorLbl,
+        _ui->themeColorButton,
+        _ui->themeColorResetButton,
         _ui->saveButton
     };
     for (QWidget *widget : visibleWidgets)
@@ -2681,7 +2695,7 @@ void MainWindow::applyTheme(Theme theme)
     _ui->themeButton->show();
 
     const QColor accent = currentAccentColor();
-    const QColor accentText = Qt::white;
+    const QColor accentText = qGray(accent.rgb()) > 150 ? Qt::black : Qt::white;
     QString appStyle = _defaultAppStyleSheet;
     QColor shellBgStart;
     QColor shellBgEnd;
@@ -3261,14 +3275,18 @@ void MainWindow::applyTheme(Theme theme)
 
 QColor MainWindow::currentAccentColor() const
 {
-    return QColor(10, 102, 194);
+    return _accentColor.isValid() ? _accentColor : QColor(10, 102, 194);
 }
 
 void MainWindow::updateThemeColorButton()
 {
-    _ui->themeColorLbl->hide();
-    _ui->themeColorButton->hide();
-    _ui->themeColorResetButton->hide();
+    const QColor accent = currentAccentColor();
+    const QString textColor = qGray(accent.rgb()) > 150 ? "#000000" : "#FFFFFF";
+    _ui->themeColorButton->setText(accent.name().toUpper());
+    _ui->themeColorButton->setStyleSheet(
+        QString("QPushButton { background-color: %1; color: %2; border: 1px solid %2; padding: 4px 10px; }")
+            .arg(accent.name(), textColor));
+    _ui->themeColorResetButton->setEnabled(_accentColor.isValid());
 }
 
 const QString MainWindow::sGroupBoxStyle =  "\
