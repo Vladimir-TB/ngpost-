@@ -18,12 +18,12 @@
 #ifndef MyAppId
   #define MyAppId "{{0D9414AA-FE44-4964-BB95-0143DBDDBF09}}"
 #endif
-#define MyAppVersion "5.1.2-rc1"
+#define MyAppVersion "5.1.2"
 #define MyAppPublisher "spotnet.team"
 #define MyAppExeName "ngPost.exe"
 #define MyAppDir "..\dist-qt6"
 #ifndef MyOutputDir
-  #define MyOutputDir "..\release\5.1.2-rc1-INTERN-UNSIGNED"
+  #define MyOutputDir "..\release\5.1.2-UNSIGNED"
 #endif
 #define MyAppIcon "..\src\ngPost.ico"
 #ifndef MyPortableBase

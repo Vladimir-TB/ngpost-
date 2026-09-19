@@ -1,22 +1,23 @@
-﻿<img src="pics/ngpost_plus_icon.png" alt="ngPost+ icon" width="96" height="96" />
+<img src="pics/ngpost_plus_icon.png" alt="ngPost+ icon" width="96" height="96" />
 
 # ngPost+
 
 Modern, performance-focused Qt 6 fork of ngPost for reliable Usenet posting.
 Based on the original ngPost project by Max Bruel, with fixes, refinements and enhancements.
 
-Current local candidate: `v5.1.2-rc1` (Qt 6, internal / unsigned)
+Current version: `v5.1.2` (Qt 6, unsigned; publication status in STATUS.md)
 
 ## Actuele lokale status en resultaat
 - [STATUS.md](STATUS.md) is de actuele bron voor wijzigingen, controlebewijs en resterend werk.
 - [Juridische controle en signingadvies](docs/LEGAL-REVIEW.md): licenties, BREIN/auteursrecht en voorwaarden voor publieke ondertekening.
-- [Installer en portable downloaden/openen](release/5.1.2-rc1-INTERN-UNSIGNED/00%20-%20START%20HIER.md): lokale kandidaat, nog niet publiek uitgeven.
+- [Installer en portable downloaden/openen](release/5.1.2-UNSIGNED/00%20-%20START%20HIER.md): versie 5.1.2, unsigned.
+- [Release notes 5.1.2](docs/releases/5.1.2.md) en [bouwen/broncodevoorziening](docs/RELEASE.md). Het wijzigingsoverzicht staat ook bovenaan **Help**.
 - [Onderzoeksplan issues 1–3](docs/ISSUES-PLAN.md) is historisch; uitvoering en controle staan in STATUS.md.
 - Start de lokale app via [dist-qt6/ngPost.exe](dist-qt6/ngPost.exe).
 - De kleurkiezer staat onder **Voorkeuren → Themakleur**, onderaan bij Taal en de licht/donkerknop. Scroll zo nodig omlaag. Klik op het kleurvak; **Reset** herstelt het standaardblauw.
 - De gekozen kleur bepaalt het volledige lichte of donkere thema: achtergronden, panelen, invoervelden, knoppen, randen, menu's en hulpvensters kleuren mee. Tekstcontrast wordt automatisch aangepast; fout- en postingstatussen behouden hun betekenis.
 - Nieuw: **Alle sessies starten** bovenaan; **Kopieer** naast de metadata onder **Geavanceerd tonen**; mapbatches met voortgang/annuleren; zichtbare melding over verantwoordelijkheid voor uploads. De installer begint in het Engels en biedt Nederlands aan.
-- Indeling: `src/` productcode/vertalingen; `tests/` UI-, batch-, NNTP- en pakketcontroles; `docs/` documentatie en juridisch onderzoek; `pics/` documentatiebeelden; `installer/` installerbron; `build-qt6/` buildstaging; `artifacts/` technische logs, testconfiguraties en backups; `dist-qt6/` direct te starten portable app; `release/` uitsluitend installer/portable-kandidaten en gebruikersuitleg; `.qt/` en `.tools/` lokale hulpmiddelen.
+- Indeling: `src/` productcode/vertalingen; `tests/` UI-, batch-, NNTP- en pakketcontroles; `docs/` documentatie en juridisch onderzoek; `pics/` documentatiebeelden; `installer/` installerbron; `build-qt6/` buildstaging; `artifacts/` technische logs, testconfiguraties en backups; `dist-qt6/` direct te starten portable app; `release/` uitsluitend installer/portable, bijbehorende bronpakketten, checksums en gebruikersuitleg; `.qt/` en `.tools/` lokale hulpmiddelen.
 - Herhaal de colorpicker-controle met `./tests/run-colorpicker-smoke.ps1`. De test gebruikt uitsluitend een eigen configuratie onder `artifacts/`.
 
 ## Highlights
@@ -73,7 +74,8 @@ Current local candidate: `v5.1.2-rc1` (Qt 6, internal / unsigned)
 - Local config (ignored by git): `ngPost.conf`
 
 ## Release Notes
-- `release.md`
+- [Version 5.1.2](docs/releases/5.1.2.md)
+- Earlier notes: `release.md`
 
 ## License
 - See `LICENSE`.
@@ -88,7 +90,7 @@ Current local candidate: `v5.1.2-rc1` (Qt 6, internal / unsigned)
 Moderne, performance-gerichte Qt 6-fork van ngPost voor betrouwbare Usenet-posting.
 Gebaseerd op het originele ngPost-project van Max Bruel, met fixes, verfijningen en verbeteringen.
 
-Huidige lokale kandidaat: `v5.1.2-rc1` (Qt 6, intern / unsigned)
+Huidige versie: `v5.1.2` (Qt 6, unsigned; publicatiestatus in STATUS.md)
 
 ## Highlights
 - Snelle, strakke Qt 6-port met geüpdatete build- en installer-scripts.

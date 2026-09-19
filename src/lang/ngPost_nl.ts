@@ -1141,6 +1141,58 @@ Zet rar.exe of 7za.exe naast ngPost.exe</translation>
         <source>Generate</source>
         <translation>Genereer</translation>
     </message>
+    <message>
+        <source>What's new in %1</source>
+        <translation>Nieuw in %1</translation>
+    </message>
+    <message>
+        <source>Improvements</source>
+        <translation>Verbeteringen</translation>
+    </message>
+    <message>
+        <source>Fixes</source>
+        <translation>Opgeloste problemen</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Theme colour:&lt;/b&gt; choose a colour in Preferences. The entire light or dark interface follows your choice, including dialogs. Your choice is remembered; Reset restores the default.</source>
+        <translation>&lt;b&gt;Themakleur:&lt;/b&gt; kies een kleur in Voorkeuren. De hele lichte of donkere interface kleurt mee, inclusief dialoogvensters. Je keuze blijft bewaard; Reset herstelt de standaardkleur.</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Start all sessions:&lt;/b&gt; queue ready sessions in tab order with one click. Uploads run one at a time; active or completed sessions are skipped.</source>
+        <translation>&lt;b&gt;Alle sessies starten:&lt;/b&gt; zet voorbereide sessies met één klik in tabvolgorde in de wachtrij. Uploads lopen één voor één; actieve of voltooide sessies worden overgeslagen.</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Copy:&lt;/b&gt; open Show advanced to copy the NZB filename, archive name or session password. The correct values remain available after posting.</source>
+        <translation>&lt;b&gt;Kopieer:&lt;/b&gt; open Geavanceerd tonen om de NZB-bestandsnaam, archiefnaam of het sessiewachtwoord te kopiëren. De juiste waarden blijven na het posten beschikbaar.</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Large folder batches:&lt;/b&gt; scanning and session creation now show progress and support cancellation while keeping the interface responsive.</source>
+        <translation>&lt;b&gt;Grote aantallen mappen:&lt;/b&gt; scannen en sessies aanmaken tonen nu voortgang en kunnen worden geannuleerd. De interface blijft daarbij reageren.</translation>
+    </message>
+    <message>
+        <source>Reduced interface freezes during folder processing, between queued jobs and when stopping uploads or compression tools.</source>
+        <translation>Minder vastlopers tijdens mapverwerking, tussen taken in de wachtrij en bij het stoppen van uploads of compressiehulpmiddelen.</translation>
+    </message>
+    <message>
+        <source>NZB filename conflicts can be skipped, overwritten or given a unique name, with an option to apply the choice to all conflicts.</source>
+        <translation>Bij bestaande NZB-bestandsnamen kun je overslaan, overschrijven of een unieke naam kiezen, eventueel voor alle conflicten tegelijk.</translation>
+    </message>
+    <message>
+        <source>Prevented duplicate session creation and repeated queueing. Session passwords and completed NZB information are retained correctly.</source>
+        <translation>Dubbele sessies en herhaald toevoegen aan de wachtrij voorkomen. Sessiewachtwoorden en NZB-gegevens blijven correct bewaard na afronden.</translation>
+    </message>
+    <message>
+        <source>The installer starts in English and also offers Dutch. Upgrades remember the previous language, installation folder and portable mode, preserving your configuration.</source>
+        <translation>De installer start in het Engels en biedt ook Nederlands aan. Updates onthouden de vorige taal, installatiemap en portable modus en behouden je configuratie.</translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Updating:&lt;/b&gt; close ngPost+ and run the installer for your existing installation. For portable use, extract the complete ZIP into the existing folder and keep ngPost.conf. Improvements and fixes for this release are listed here in Help.</source>
+        <translation>&lt;b&gt;Bijwerken:&lt;/b&gt; sluit ngPost+ en voer de installer uit voor je bestaande installatie. Pak bij portable gebruik de volledige ZIP uit in de bestaande map en behoud ngPost.conf. De verbeteringen en opgeloste problemen van deze versie staan hier in Help.</translation>
+    </message>
+    <message>
+        <source>The installer and portable ZIP both include rar.exe and par2.exe. Extract the entire portable ZIP so that the tools and runtime remain next to ngPost.exe.</source>
+        <translation>De installer en portable ZIP bevatten allebei rar.exe en par2.exe. Pak de hele portable ZIP uit zodat hulpmiddelen en runtime naast ngPost.exe blijven staan.</translation>
+    </message>
 </context>
 <context>
     <name>NgPost</name>
@@ -2480,6 +2532,10 @@ Gebruik --par2_pct of stel PAR2_PCT of PAR2_ARGS in het configuratiebestand in.<
         <location filename="../NgPost.h" line="714"/>
         <source>If you&apos;d like to translate ngPost in your language, it&apos;s easy, please contact me at Matthieu.Bruel@gmail.com</source>
         <translation>Als je ngPost in je eigen taal wilt vertalen, neem dan contact met me op via Matthieu.Bruel@gmail.com</translation>
+    </message>
+    <message>
+        <source>Folder monitoring helps automate posting. ngPost does not guarantee anonymity or grant rights to distribute third-party material.</source>
+        <translation>Mapbewaking helpt bij automatisch posten. ngPost garandeert geen anonimiteit en verleent geen verspreidingsrechten voor materiaal van derden.</translation>
     </message>
 </context>
 <context>

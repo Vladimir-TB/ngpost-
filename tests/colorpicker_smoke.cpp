@@ -8,6 +8,7 @@
 #include <QPushButton>
 #include <QScrollArea>
 #include <QTimer>
+#include <QTextBrowser>
 #include <cmath>
 #include <iostream>
 #include <stdexcept>
@@ -87,6 +88,20 @@ int main(int argc, char *argv[])
         window->init(&app);
         app.changeLanguage("nl");
         window->show();
+        require(QMetaObject::invokeMethod(window, "onOpenHelpDialog"), "Help unavailable");
+        auto *help = window->findChild<QTextBrowser *>("helpBrowser");
+        require(help && help->toPlainText().contains("5.1.2"), "Release notes missing from Help");
+        require(help->toPlainText().contains("Verbeteringen") && help->toPlainText().contains("Opgeloste problemen"), "Dutch release notes missing");
+        QApplication::processEvents();
+        help->window()->grab().save(QDir(directory).filePath("help-5.1.2-nl.png"));
+        app.changeLanguage("en");
+        QApplication::processEvents();
+        require(help->toPlainText().contains("Improvements") && help->toPlainText().contains("Fixes"), "English release notes missing");
+        help->window()->grab().save(QDir(directory).filePath("help-5.1.2-en.png"));
+        help->window()->hide();
+        app.changeLanguage("nl");
+        QApplication::processEvents();
+        std::cout << "PASS: Help release notes in Dutch and English\n";
         require(QMetaObject::invokeMethod(window, "onOpenPreferencesDialog"), "Preferences unavailable");
         QApplication::processEvents();
         auto *pick = window->findChild<QPushButton *>("themeColorButton");

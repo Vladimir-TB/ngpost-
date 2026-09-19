@@ -7,7 +7,7 @@ $identity=[guid]::NewGuid().ToString()
 # Same installer source and payload, with a separate identity so personal installations remain untouched.
 & $IsccPath "-dMyAppId={{${identity}}}" "-dMyAppName=ngPost Verification $($identity.Substring(0,8))" "-dMyOutputDir=$evidence" "-dMyPortableBase=$evidence" (Join-Path $projectRoot 'installer\ngPost.iss') *> (Join-Path $evidence 'compile.log')
 if($LASTEXITCODE -ne 0) { throw 'Verification installer compile failed' }
-$setup=Join-Path $evidence 'ngPost-setup-v5.1.2-rc1-UNSIGNED.exe'
+$setup=Join-Path $evidence 'ngPost-setup-v5.1.2-UNSIGNED.exe'
 $productHash=(Get-FileHash (Join-Path $projectRoot 'dist-qt6\ngPost.exe')).Hash
 function Install-Fixture([string]$label,[string]$directory,[string]$options,[string]$language) {
     $log=Join-Path $evidence "$label.log"
@@ -16,6 +16,9 @@ function Install-Fixture([string]$label,[string]$directory,[string]$options,[str
     if($process.ExitCode -ne 0) { throw "Install failed: $label ($($process.ExitCode))" }
     if(-not (Select-String -LiteralPath $log -SimpleMatch "Selected setup language: $language")) { throw "Unexpected language: $label" }
     if((Get-FileHash (Join-Path $directory 'ngPost.exe')).Hash -ne $productHash) { throw 'Installed executable differs' }
+    foreach($notice in @('LICENSE','notices\README.txt','notices\RAR-EULA-en.html','notices\Qt-6.8.3\qtbase\LICENSES\LGPL-3.0-only.txt','notices\par2cmdline-turbo-1.3.0\COPYING')) {
+        if(-not (Test-Path (Join-Path $directory $notice))) { throw "Missing packaged notice: $notice" }
+    }
 }
 function Uninstall-Fixture([string]$directory) {
     $resolved=(Resolve-Path -LiteralPath $directory).Path
@@ -46,10 +49,12 @@ try {
     if((Get-FileHash (Join-Path $portable 'ngPost.conf')).Hash -ne $configHash) { throw 'Portable upgrade changed config' }
     Uninstall-Fixture $portable
     $unpacked=Join-Path $evidence 'portable-zip'
-    Expand-Archive -LiteralPath (Join-Path $projectRoot 'release\5.1.2-rc1-INTERN-UNSIGNED\ngPost-portable-v5.1.2-rc1-UNSIGNED.zip') -DestinationPath $unpacked
+    Expand-Archive -LiteralPath (Join-Path $projectRoot 'release\5.1.2-UNSIGNED\ngPost-portable-v5.1.2-UNSIGNED.zip') -DestinationPath $unpacked
     if(Test-Path (Join-Path $unpacked 'ngPost.conf')) { throw 'Personal configuration in ZIP' }
     if(-not (Test-Path (Join-Path $unpacked 'portable.mode'))) { throw 'Portable ZIP marker missing' }
     if((Get-FileHash (Join-Path $unpacked 'ngPost.exe')).Hash -ne $productHash) { throw 'Portable executable differs' }
+    if((Get-Item (Join-Path $unpacked 'ngPost.exe')).VersionInfo.FileVersion -ne '5.1.2.0') { throw 'Portable has wrong file version' }
+    if(-not (Test-Path (Join-Path $unpacked 'notices\README.txt'))) { throw 'Portable licenses missing' }
     # Without Qt on PATH, the portable CLI must load solely with its packaged runtime.
     $savedPath=$env:PATH
     try {

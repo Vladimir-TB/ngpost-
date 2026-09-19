@@ -1365,6 +1365,7 @@ void MainWindow::_initHelpDialog()
     layout->setSpacing(8);
 
     _helpBrowser = new QTextBrowser(_helpDialog);
+    _helpBrowser->setObjectName("helpBrowser");
     _helpBrowser->setOpenExternalLinks(true);
     _helpBrowser->setReadOnly(true);
     _helpBrowser->setHtml(_helpHtml());
@@ -1523,6 +1524,23 @@ QString MainWindow::_helpHtml() const
     html += "<div class='page'>";
     html += QString("<h1>%1</h1>").arg(tr("%1 - Gebruikershandleiding").arg(appName));
     html += paragraph(tr("Met %1 kun je bestanden of mappen comprimeren, optioneel PAR2-bestanden maken, posten naar Usenet en automatisch een NZB-bestand laten schrijven.").arg(appName));
+    html += QString("<h2>%1</h2>").arg(tr("What's new in %1").arg("5.1.2"));
+    html += paragraph(tr("Improvements"));
+    html += "<ul>";
+    html += item(tr("<b>Theme colour:</b> choose a colour in Preferences. The entire light or dark interface follows your choice, including dialogs. Your choice is remembered; Reset restores the default."));
+    html += item(tr("<b>Start all sessions:</b> queue ready sessions in tab order with one click. Uploads run one at a time; active or completed sessions are skipped."));
+    html += item(tr("<b>Copy:</b> open Show advanced to copy the NZB filename, archive name or session password. The correct values remain available after posting."));
+    html += item(tr("<b>Large folder batches:</b> scanning and session creation now show progress and support cancellation while keeping the interface responsive."));
+    html += "</ul>";
+    html += paragraph(tr("Fixes"));
+    html += "<ul>";
+    html += item(tr("Reduced interface freezes during folder processing, between queued jobs and when stopping uploads or compression tools."));
+    html += item(tr("NZB filename conflicts can be skipped, overwritten or given a unique name, with an option to apply the choice to all conflicts."));
+    html += item(tr("Prevented duplicate session creation and repeated queueing. Session passwords and completed NZB information are retained correctly."));
+    html += item(tr("The installer starts in English and also offers Dutch. Upgrades remember the previous language, installation folder and portable mode, preserving your configuration."));
+    html += "</ul>";
+    html += paragraph(tr("<b>Updating:</b> close ngPost+ and run the installer for your existing installation. For portable use, extract the complete ZIP into the existing folder and keep ngPost.conf. Improvements and fixes for this release are listed here in Help."));
+    html += paragraph(tr("You are responsible for what you upload. Only post material you have the right to distribute."));
     html += QString("<div class='note'><b>%1</b><br/>%2</div>")
                 .arg(tr("Belangrijk"))
                 .arg(tr("De standaard release levert <code style=\"%1\">rar.exe</code> al mee en gebruikt die automatisch naast <code style=\"%1\">ngPost.exe</code>. Je hoeft in de GUI dus geen RAR-pad meer te kiezen.").arg(codeStyle));
@@ -1538,7 +1556,7 @@ QString MainWindow::_helpHtml() const
 
     html += QString("<h2>%1</h2>").arg(tr("1. Benodigde bestanden"));
     html += "<ul>";
-    html += item(tr("In de standaard release staat <code style=\"%1\">rar.exe</code> al naast <code style=\"%1\">ngPost.exe</code>. Alleen bij een losse portable build moet je zelf een ondersteunde archiver meegeven.").arg(codeStyle));
+    html += item(tr("The installer and portable ZIP both include rar.exe and par2.exe. Extract the entire portable ZIP so that the tools and runtime remain next to ngPost.exe."));
     html += item(tr("Gebruik je <code style=\"%1\">7z.exe</code>, zet dan meestal ook <code style=\"%1\">7z.dll</code> in dezelfde map.").arg(codeStyle));
     html += item(tr("Wil je PAR2 gebruiken, zorg dan dat een werkende <code style=\"%1\">par2.exe</code> beschikbaar is.").arg(codeStyle));
     html += item(tr("Je NZB-uitvoerpad en tijdelijke compressiemap moeten schrijfbaar zijn."));

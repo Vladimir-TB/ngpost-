@@ -31,6 +31,8 @@ Copy-Item -LiteralPath (Join-Path $projectRoot 'LICENSE') -Destination $staging
 $notices = Join-Path $staging 'notices'
 New-Item -ItemType Directory $notices -Force | Out-Null
 Copy-Item -LiteralPath (Join-Path $projectRoot 'installer\voorwaarden.txt'),(Join-Path $projectRoot 'installer\terms-en.txt') -Destination $notices
+Copy-Item -Path (Join-Path $projectRoot 'installer\notices\*') -Destination $notices -Recurse
+if (-not (Test-Path (Join-Path $notices 'Qt-6.8.3\qtbase\LICENSES\LGPL-3.0-only.txt'))) { throw 'Qt license notices missing; run installer/prepare-notices.py.' }
 Set-Content -LiteralPath (Join-Path $staging 'portable.mode') -Value 'portable=1' -Encoding ascii
 # Preserve configuration and archive the complete former distribution before replacement.
 if (Test-Path -LiteralPath (Join-Path $dist 'ngPost.conf')) { Copy-Item -LiteralPath (Join-Path $dist 'ngPost.conf') -Destination $staging }

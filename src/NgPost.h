@@ -735,7 +735,7 @@ QString NgPost::desc(bool useHTML)
 {
     QString line1 = tr("This version of ngPost is a fully modernized successor to the original program, a modern Usenet poster with both a command-line and graphical interface.");
     QString line2 = tr("It automates the full upload process: from compression and PAR2 generation to NZB creation and cleanup.");
-    QString line3 = tr("Thanks to smart monitoring and a unique invisible mode, ngPost is ideal for safe, efficient, and automated posting.");
+    QString line3 = tr("Folder monitoring helps automate posting. ngPost does not guarantee anonymity or grant rights to distribute third-party material.");
     line1.replace("ngPost", displayName());
     line3.replace("ngPost", displayName());
     QString sep = useHTML ? "<br/>" : "\n";

@@ -71,7 +71,7 @@ AboutNgPost::AboutNgPost(NgPost *ngPost, QWidget *parent) :
     ui->titleLbl->setText(QString("<pre>%1</pre>").arg(ngPost->escapeXML(ngPost->brandedAsciiArtWithVersion())));
     ui->titleLbl->setFont(QFont("Segoe UI", 13, QFont::Bold));
 
-    ui->copyrightLbl->setText("Copyright 2026 by spotnet.team (by tb). build met C++ / QT 6");
+    ui->copyrightLbl->setText("ngPost: Copyright Matthieu (Max) Bruel and contributors\nngPost+: Copyright 2026 spotnet.team (by tb) | GPLv3\nLicenses and source information: notices/README.txt");
     ui->copyrightLbl->setFont(QFont("Segoe UI", 9, QFont::DemiBold));
 
     ui->descLbl->setTextFormat(Qt::RichText);
