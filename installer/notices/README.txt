@@ -8,9 +8,9 @@ No warranty is provided except where applicable law requires otherwise.
 The exact application source, build scripts and bundled open-source component
 sources are available alongside the binaries at:
 https://github.com/Vladimir-TB/ngpost-/releases/tag/v5.1.2
-Download ngPost-source-v5.1.2.zip and ngPost-dependency-sources-v5.1.2.zip.
+Use the exact-version source links under Source code and licenses on that page.
 Application repository: https://github.com/Vladimir-TB/ngpost-
-Build instructions: README.md and docs/RELEASE.md in the source archive.
+The immutable release tag retains the original documentation and build scripts.
 
 Qt 6.8.3 (The Qt Company Ltd. and contributors)
 Qt Core, Concurrent, GUI, Widgets, Network, SVG and their deployed plugins
@@ -18,7 +18,7 @@ are dynamically linked, unmodified official MSVC 2022 x64 Qt binaries.
 Qt is available under LGPLv3/GPLv3 and other applicable licenses; full texts,
 upstream copyright attributions and third-party notices are in Qt-6.8.3/.
 That directory also retains notices for upstream code not used on Windows.
-Corresponding qtbase and qtsvg sources are in the dependency source download.
+Corresponding qtbase and qtsvg sources are linked directly from the release page.
 You may modify/replace the Qt libraries with interface-compatible builds and
 reverse engineer the application for debugging those library modifications,
 as permitted by the applicable licenses. No signing or integrity check in this
@@ -30,7 +30,7 @@ GNU GPL version 2 or later; see par2cmdline-turbo-1.3.0/COPYING.
 The bundled par2.exe is byte-identical to the official v1.3.0 win-x64 release.
 SHA256: F582C368A07D4B0BBBEFC0B592BAC79077E16FD8BB1DD3C19F04BF18C444C176
 Corresponding source, embedded ParPar code and upstream build workflows are
-included in the dependency source download. Source commit:
+available through the exact source link on the release page. Source commit:
 f220e1f1a74796006ca01e717e411a11e7b69a07
 https://github.com/animetosho/par2cmdline-turbo/tree/v1.3.0
 

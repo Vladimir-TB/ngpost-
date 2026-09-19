@@ -8,17 +8,17 @@ Based on the original ngPost project by Max Bruel, with fixes, refinements and e
 Current release: [v5.1.2 — download installer and portable](https://github.com/Vladimir-TB/ngpost-/releases/tag/v5.1.2) (Qt 6, unsigned)
 
 ## Actuele lokale status en resultaat
+- [Gebruikerswiki](https://github.com/Vladimir-TB/ngpost-/wiki): werking van de app, geschiedenis en laatste verbeteringen.
 - [STATUS.md](STATUS.md) is de actuele bron voor wijzigingen, controlebewijs en resterend werk.
 - [Juridische controle en signingadvies](docs/LEGAL-REVIEW.md): licenties, BREIN/auteursrecht en voorwaarden voor publieke ondertekening.
 - [Installer en portable downloaden/openen](release/5.1.2-UNSIGNED/00%20-%20START%20HIER.md): versie 5.1.2, unsigned.
-- [Release notes 5.1.2](docs/releases/5.1.2.md) en [bouwen/broncodevoorziening](docs/RELEASE.md). Het wijzigingsoverzicht staat ook bovenaan **Help**.
+- [Release notes 5.1.2](docs/releases/5.1.2.md) en [broncode en licenties](docs/RELEASE.md). Het wijzigingsoverzicht staat ook bovenaan **Help**.
 - [Onderzoeksplan issues 1–3](docs/ISSUES-PLAN.md) is historisch; uitvoering en controle staan in STATUS.md.
 - Start de lokale app via [dist-qt6/ngPost.exe](dist-qt6/ngPost.exe).
 - De kleurkiezer staat onder **Voorkeuren → Themakleur**, onderaan bij Taal en de licht/donkerknop. Scroll zo nodig omlaag. Klik op het kleurvak; **Reset** herstelt het standaardblauw.
 - De gekozen kleur bepaalt het volledige lichte of donkere thema: achtergronden, panelen, invoervelden, knoppen, randen, menu's en hulpvensters kleuren mee. Tekstcontrast wordt automatisch aangepast; fout- en postingstatussen behouden hun betekenis.
 - Nieuw: **Alle sessies starten** bovenaan; **Kopieer** naast de metadata onder **Geavanceerd tonen**; mapbatches met voortgang/annuleren; zichtbare melding over verantwoordelijkheid voor uploads. De installer begint in het Engels en biedt Nederlands aan.
 - Indeling: `src/` productcode/vertalingen; `tests/` UI-, batch-, NNTP- en pakketcontroles; `docs/` documentatie en juridisch onderzoek; `pics/` documentatiebeelden; `installer/` installerbron; `build-qt6/` buildstaging; `artifacts/` technische logs, testconfiguraties en backups; `dist-qt6/` direct te starten portable app; `release/` uitsluitend installer/portable, bijbehorende bronpakketten, checksums en gebruikersuitleg; `.qt/` en `.tools/` lokale hulpmiddelen.
-- Herhaal de colorpicker-controle met `./tests/run-colorpicker-smoke.ps1`. De test gebruikt uitsluitend een eigen configuratie onder `artifacts/`.
 
 ## Highlights
 - Faster, cleaner Qt 6 port with updated build and installer scripts.
@@ -59,15 +59,6 @@ Current release: [v5.1.2 — download installer and portable](https://github.com
 <a href="pics/ngpost_plus_screenshot.png">
   <img src="pics/ngpost_plus_screenshot.png" alt="ngPost+ Screenshot" width="900" />
 </a>
-
-## Build (Windows)
-1. Install Qt 6.8.x + MSVC 2022.
-2. Run `build-qt6.ps1`.
-
-## Installer (Windows)
-1. Install Inno Setup 6.
-2. Optional: set `ISCC_PATH` to the path of `ISCC.exe`.
-3. Run `build-installers.ps1`.
 
 ## Configuration
 - Template: `ngPost.conf.example`
@@ -131,15 +122,6 @@ Huidige release: [v5.1.2 — installer en portable downloaden](https://github.co
 <a href="pics/ngpost_plus_screenshot.png">
   <img src="pics/ngpost_plus_screenshot.png" alt="ngPost+ Screenshot" width="900" />
 </a>
-
-## Build (Windows)
-1. Installeer Qt 6.8.x + MSVC 2022.
-2. Run `build-qt6.ps1`.
-
-## Installer (Windows)
-1. Installeer Inno Setup 6.
-2. Optioneel: zet `ISCC_PATH` naar het pad van `ISCC.exe`.
-3. Run `build-installers.ps1`.
 
 ## Configuratie
 - Template: `ngPost.conf.example`

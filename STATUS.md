@@ -1,11 +1,13 @@
 # Actuele projectstatus
 
-Datum: **19 september 2026**. Fase: **release 5.1.2 gepubliceerd**. Opleverstatus: **publieke nieuwste GitHub-release; installer en portable UNSIGNED; vijf downloads geverifieerd**.
+Datum: **19 september 2026**. Fase: **release 5.1.2 gepubliceerd**. Opleverstatus: **publieke nieuwste GitHub-release; installer en portable UNSIGNED; alleen installer en portable als toegevoegde downloads; hashes geverifieerd**.
 
 ## Gereed
 
+- [GitHub-gebruikerswiki](https://github.com/Vladimir-TB/ngpost-/wiki) aangemaakt: Home, Werking van de app, Geschiedenis en Laatste verbeteringen, met zijbalknavigatie. Gepubliceerd via Vladimir-TB; wiki-commit `f5eb675`. Pagina-inhoud en interne links gecontroleerd.
+
 - **Help → Nieuw in 5.1.2** bevat verbeteringen, opgeloste problemen en update-instructies in Nederlands en Engels. Makerscredits hersteld; ongefundeerde anonimiteitsclaim vervangen.
-- Qt- en par2-licenties/attributions en RAR EULA worden meegeleverd. PAR2-binary is byte-identiek aan de officiële release; Qt-bronarchieven hebben de officiële hashes. Broncode wordt naast de binaries geleverd. [Build- en broncodehandleiding](docs/RELEASE.md).
+- Qt- en par2-licenties/attributions en RAR EULA worden meegeleverd. PAR2-binary is byte-identiek aan de officiële release; Qt-bronarchieven hebben de officiële hashes. Overeenkomstige broncode is direct gelinkt op de releasepagina; de gecombineerde bronpakketten zijn uit de GitHub-assets verwijderd. [Broncode en licenties](docs/RELEASE.md).
 - Het volledige lichte/donkere UI-thema volgt de kleurkiezer onder **Voorkeuren → Themakleur**, inclusief opslag, herstart en Reset.
 - Mapscans en validatie gebeuren buiten de GUI-thread. Sessies worden stapsgewijs aangemaakt met voortgang en annuleren; de gekozen tab blijft staan. Dubbele initialisatie is verwijderd.
 - **Alle sessies starten** zet voorbereide sessies in tabvolgorde in de bestaande wachtrij. Actieve, ingeplande, lege en voltooide sessies worden niet opnieuw gestart. Eén uploadjob tegelijk; de bestaande instelling PREPARE_PACKING blijft werken.
@@ -18,7 +20,7 @@ Datum: **19 september 2026**. Fase: **release 5.1.2 gepubliceerd**. Opleverstatu
 
 ## Resultaat
 
-- [Publieke GitHub-release 5.1.2](https://github.com/Vladimir-TB/ngpost-/releases/tag/v5.1.2), gepubliceerd op 19 september 2026 om 15:40 CEST door **Vladimir-TB**. Release-ID `392085334`, geen draft/prerelease. Alle vijf GitHub-assetdigests komen overeen met de lokale SHA-256. [Publicatiebewijs](artifacts/release-compliance/published-release.json).
+- [Publieke GitHub-release 5.1.2](https://github.com/Vladimir-TB/ngpost-/releases/tag/v5.1.2), gepubliceerd op 19 september 2026 om 15:40 CEST door **Vladimir-TB**. Release-ID `392085334`, geen draft/prerelease. De twee resterende binary-assets komen overeen met de oorspronkelijke lokale SHA-256. De twee bronpakketten en checksum-asset zijn op verzoek verwijderd; checksums staan nu in de releasetekst. Bouwinstructies zijn uit de huidige develop-documentatie verwijderd en blijven in de onveranderde release-tag bewaard. [Publicatiebewijs](artifacts/release-presentation/release-after.json).
 
 - [Eindproducten en uitleg](release/5.1.2-UNSIGNED/00%20-%20START%20HIER.md).
 - [Installer](release/5.1.2-UNSIGNED/ngPost-setup-v5.1.2-UNSIGNED.exe).
@@ -41,9 +43,12 @@ Datum: **19 september 2026**. Fase: **release 5.1.2 gepubliceerd**. Opleverstatu
 | Help en thema | Nederlands/Engels releaseoverzicht aanwezig en gerenderd; acht kleuren in licht/donker; tekstcontrast minimaal 4,5:1; kiezen, annuleren, opslaan, herstart en Reset. [Smoke](artifacts/colorpicker/smoke.log), [herstart](artifacts/colorpicker/restart.log). |
 | Installer en portable | Inno 7.1.0; verse Engelse setup, expliciet Nederlands, bewaarde taal, normale/portable modus, doelmap, configuratiebehoud, identieke executable en portable starten zonder Qt op PATH. [Bewijs](artifacts/installer-smoke/20260919-153622/result.txt). |
 
-Herhalen met PowerShell 7: `tests/run-colorpicker-smoke.ps1` bouwt eerst de productieobjecten; daarna `tests/run-issue-validation.ps1` en `tests/run-session-workflow.ps1`. Packaging: `build-qt6.ps1`, `build-installers.ps1`, daarna `tests/run-installer-smoke.ps1`. De installercontrole gebruikt dezelfde bron/payload met een aparte testidentiteit en ruimt de testregistratie op, zodat de bestaande gebruikersinstallatie behouden blijft.
+De controles gebruiken geïsoleerde fixtures onder `artifacts/`; bestaande gebruikersinstallaties en persoonlijke configuraties worden niet gebruikt.
 
-De aanwezige Inno CLI op `D:\Dashboard-wdw\artifacts\tools\inno-setup-7.1.0-x64\ISCC.exe` is gebruikt. Een compiler kan ook expliciet via `-IsccPath` of `ISCC_PATH` worden opgegeven.
+## Externe wijzigingen en herstel
+
+- Scope: GitHub-release v5.1.2, develop-documentatie en de wiki van Vladimir-TB/ngpost-. De twee binaries en release-tag zijn ongewijzigd. Drie aanvullende release-assets verwijderd op verzoek; bronlinks en inline checksums staan in de releasetekst. GitHub houdt zelf twee automatische broncodearchieven zichtbaar.
+- Herstel: oorspronkelijke releasemetadata in `artifacts/release-presentation/release-before.json`; oorspronkelijke downloads lokaal in `release/5.1.2-UNSIGNED`. Bronbackups voortaan in `artifacts/source-backups/5.1.2`; het backupscript schrijft geen nieuwe bronassets naar de release-output. Wiki heeft eigen Git-historie en een lokale checkout in `artifacts/wiki-publishing`.
 
 ## Resteert / bewust niet uitgevoerd
 

@@ -1,7 +1,8 @@
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $inputRoot = Join-Path $projectRoot 'artifacts\release-compliance'
-$out = Join-Path $projectRoot 'release\5.1.2-UNSIGNED'
+$out = Join-Path $projectRoot 'artifacts\source-backups\5.1.2'
+New-Item -ItemType Directory $out -Force | Out-Null
 $stage = Join-Path $projectRoot ('artifacts\source-packaging\' + (Get-Date -Format 'yyyyMMdd-HHmmss'))
 New-Item -ItemType Directory $stage -Force | Out-Null
 $qtHashes = @{
@@ -21,9 +22,9 @@ git -C $par2Root archive --format=zip --prefix=par2cmdline-turbo-1.3.0/ -o (Join
 if ($LASTEXITCODE -ne 0) { throw 'par2 source archive failed' }
 Copy-Item -LiteralPath (Join-Path $projectRoot 'docs\RELEASE.md') -Destination (Join-Path $stage 'README.md')
 Compress-Archive -Path (Join-Path $stage '*') -DestinationPath (Join-Path $out 'ngPost-dependency-sources-v5.1.2.zip') -Force
-git -C $projectRoot archive --format=zip --prefix=ngPost-5.1.2/ -o (Join-Path $out 'ngPost-source-v5.1.2.zip') HEAD
+git -C $projectRoot archive --format=zip --prefix=ngPost-5.1.2/ -o (Join-Path $out 'ngPost-source-v5.1.2.zip') v5.1.2
 if ($LASTEXITCODE -ne 0) { throw 'ngPost source archive failed' }
-$sourceCommit = git -C $projectRoot rev-parse HEAD
-Add-Content -LiteralPath (Join-Path $out '00 - START HIER.md') -Value "`nBroncommit: $sourceCommit. Bronpakketten staan naast de binaries."
+$sourceCommit = git -C $projectRoot rev-parse 'v5.1.2^{commit}'
+Set-Content -LiteralPath (Join-Path $out '00 - START HIER.md') -Value "`nBroncommit: $sourceCommit. Interne bronbackup; niet als release-asset uploaden."
 Get-ChildItem -LiteralPath $out -File | Where-Object { $_.Extension -in '.exe','.zip' } | Get-FileHash -Algorithm SHA256 | ForEach-Object { '{0}  {1}' -f $_.Hash,(Split-Path $_.Path -Leaf) } | Set-Content (Join-Path $out 'SHA256SUMS.txt')
 Write-Host "Source archives and checksums: $out"
