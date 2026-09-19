@@ -5,7 +5,7 @@
 Modern, performance-focused Qt 6 fork of ngPost for reliable Usenet posting.
 Based on the original ngPost project by Max Bruel, with fixes, refinements and enhancements.
 
-Current version: `v5.1.2` (Qt 6, unsigned; publication status in STATUS.md)
+Current release: [v5.1.2 — download installer and portable](https://github.com/Vladimir-TB/ngpost-/releases/tag/v5.1.2) (Qt 6, unsigned)
 
 ## Actuele lokale status en resultaat
 - [STATUS.md](STATUS.md) is de actuele bron voor wijzigingen, controlebewijs en resterend werk.
@@ -90,7 +90,7 @@ Current version: `v5.1.2` (Qt 6, unsigned; publication status in STATUS.md)
 Moderne, performance-gerichte Qt 6-fork van ngPost voor betrouwbare Usenet-posting.
 Gebaseerd op het originele ngPost-project van Max Bruel, met fixes, verfijningen en verbeteringen.
 
-Huidige versie: `v5.1.2` (Qt 6, unsigned; publicatiestatus in STATUS.md)
+Huidige release: [v5.1.2 — installer en portable downloaden](https://github.com/Vladimir-TB/ngpost-/releases/tag/v5.1.2) (Qt 6, unsigned)
 
 ## Highlights
 - Snelle, strakke Qt 6-port met geüpdatete build- en installer-scripts.

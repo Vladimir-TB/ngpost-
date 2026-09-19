@@ -1,6 +1,6 @@
 # Actuele projectstatus
 
-Datum: **19 september 2026**. Fase: **release 5.1.2 gebouwd**. Opleverstatus: **installer en portable gebouwd; UNSIGNED, publicatie wordt voorbereid**.
+Datum: **19 september 2026**. Fase: **release 5.1.2 gepubliceerd**. Opleverstatus: **publieke nieuwste GitHub-release; installer en portable UNSIGNED; vijf downloads geverifieerd**.
 
 ## Gereed
 
@@ -18,6 +18,8 @@ Datum: **19 september 2026**. Fase: **release 5.1.2 gebouwd**. Opleverstatus: **
 
 ## Resultaat
 
+- [Publieke GitHub-release 5.1.2](https://github.com/Vladimir-TB/ngpost-/releases/tag/v5.1.2), gepubliceerd op 19 september 2026 om 15:40 CEST door **Vladimir-TB**. Release-ID `392085334`, geen draft/prerelease. Alle vijf GitHub-assetdigests komen overeen met de lokale SHA-256. [Publicatiebewijs](artifacts/release-compliance/published-release.json).
+
 - [Eindproducten en uitleg](release/5.1.2-UNSIGNED/00%20-%20START%20HIER.md).
 - [Installer](release/5.1.2-UNSIGNED/ngPost-setup-v5.1.2-UNSIGNED.exe).
 - [Portable ZIP](release/5.1.2-UNSIGNED/ngPost-portable-v5.1.2-UNSIGNED.zip).
@@ -25,7 +27,7 @@ Datum: **19 september 2026**. Fase: **release 5.1.2 gebouwd**. Opleverstatus: **
 - Appversie `5.1.2`; Windows-bestandsversie `5.1.2.0`. Productiebuild, lokale portable en geteste pakketpayload hebben dezelfde executable.
 - SHA-256 executable: `3DF7B006E5D93165FC7AC3F81CF397EEDA4115A1855E017AB0F46C8F3638EED1`.
 - [SHA-256 van installer en ZIP](release/5.1.2-UNSIGNED/SHA256SUMS.txt).
-- Bronidentiteit: release-tag `v5.1.2`, exacte commit in de lokale release-uitleg en bron-ZIP. Basis van de functionaliteit: `bc9b8df`. Publicatieaccount via GitHub API bevestigd als **Vladimir-TB**, repository **Vladimir-TB/ngpost-**.
+- Bronidentiteit: release-tag `v5.1.2`, commit `13526fb` (deze exacte bron hoort bij de binary en bron-ZIP). De opvolgende documentatiecommit legt alleen de geslaagde publicatie vast. Basis van de functionaliteit: `bc9b8df`. Publicatieaccount via GitHub API bevestigd als **Vladimir-TB**, repository **Vladimir-TB/ngpost-**.
 
 ## Bewezen/getest
 
@@ -45,7 +47,7 @@ De aanwezige Inno CLI op `D:\Dashboard-wdw\artifacts\tools\inno-setup-7.1.0-x64\
 
 ## Resteert / bewust niet uitgevoerd
 
-- GitHub-publicatie: door gebruiker aangevraagd, wordt voorbereid. Ondertekening is niet uitgevoerd; installer en app blijven herkenbaar UNSIGNED. Licentieteksten, componentbronnen en provenance zijn technisch aangevuld; dit is geen advocatenverklaring of volledige juridische/security-audit.
+- Ondertekening is niet uitgevoerd; installer en app blijven herkenbaar UNSIGNED. Licentieteksten, componentbronnen en provenance zijn technisch aangevuld; dit is geen advocatenverklaring of volledige juridische/security-audit.
 - [Juridische controle en signingadvies](docs/LEGAL-REVIEW.md): **geen openbaar expliciet verbod op ngPost/ngPost+ gevonden** in de doorzochte bronnen. Dat is geen garantie over niet-openbare zaken of concrete activiteiten rond de app. Gebruiker bevestigt schriftelijke RAR-bundeltoestemming; de voorwaarden zijn niet ingezien. Beoordeling van publieke presentatie/ondersteuning door een IE/IT-advocaat blijft aanbevolen.
 - Geen posts naar een echte Usenet-provider uitgevoerd; uitsluitend eigen fixtures op localhost. Langdurig posten, trage/netwerkpaden, echte Windows-kleurdialogen, handmatige installerpagina's op meerdere Windows-talen en automatisch uitschakelen van de computer zijn niet volledig beproefd.
 - UI-smoke/renderingen gebruiken Qt offscreen; native Windows-interactie blijft een aanvullende gebruikerscontrole.
