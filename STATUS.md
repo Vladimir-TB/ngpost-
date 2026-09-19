@@ -1,6 +1,6 @@
 # Actuele projectstatus
 
-Datum: **19 september 2026**. Fase: volledig instelbaar UI-thema. Opleverstatus: **hele UI kleurt mee, lokaal gebouwd en getest; geen nieuwe installerrelease**.
+Datum: **19 september 2026**. Fase: UI-thema gereed; vervolg op GitHub-feedback onderzocht. Opleverstatus: **hele UI kleurt mee, lokaal gebouwd en getest; issueplan gereed, uitvoering nog niet gestart; geen nieuwe installerrelease**.
 
 ## Gereed
 - De kleurkiezer en Reset zijn weer bereikbaar via **Voorkeuren → Themakleur**, onderaan naast de taal- en thema-instellingen. Scroll zo nodig omlaag.
@@ -22,6 +22,7 @@ Datum: **19 september 2026**. Fase: volledig instelbaar UI-thema. Opleverstatus:
 - Vorige executable bewaard in [backup](artifacts/colorpicker/backup-20260919-135618/ngPost.exe); oude SHA-256: `F27FF724F4C75427505CABEE04CCE50E3DDA87AD6DDAC2A5FB95708538A336A5`.
 
 ## Resteert / bewust uitgesteld
+- [Plan voor issues 1–3](docs/ISSUES-PLAN.md) is gereed op basis van actuele issues/reacties en brononderzoek op `3e82949`. Vier concrete verzoeken geïdentificeerd, inclusief Alle sessies starten uit de reacties. Eerstvolgende voorgestelde stap: #2 met 500 mappen reproduceren en meten. Nog geen performancebenchmark, issuefix of nieuwe installer uitgevoerd; geen berichten op GitHub geplaatst.
 - Start de bijgewerkte lokale app om de kleurkeuze zelf te bekijken. Een reeds geïnstalleerde versie elders op Windows is niet bijgewerkt.
 - Installers in `dist-qt6/installer/` zijn niet opnieuw gebouwd en bevatten dit herstel niet. Packaging, ondertekening en installatiecontrole vallen buiten dit UI-herstel.
 - Bestaande gebruikerswijzigingen in `release.md`, `release-old.md` en de losse schermafbeelding zijn behouden. Persoonlijke configuraties zijn niet aangepast.

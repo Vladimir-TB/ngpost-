@@ -9,6 +9,7 @@ Current version: `v5.1.1` (Qt 6)
 
 ## Actuele lokale status en resultaat
 - [STATUS.md](STATUS.md) is de actuele bron voor wijzigingen, controlebewijs en resterend werk.
+- [Uitvoerbaarheidsplan issues 1–3](docs/ISSUES-PLAN.md): onderzoek en voorgestelde aanpak voor grote batches, kopieerknoppen, alle sessies starten en de Engelstalige installer. `docs/` bevat actuele plannen en handleidingen.
 - Start de lokale app via [dist-qt6/ngPost.exe](dist-qt6/ngPost.exe).
 - De kleurkiezer staat onder **Voorkeuren → Themakleur**, onderaan bij Taal en de licht/donkerknop. Scroll zo nodig omlaag. Klik op het kleurvak; **Reset** herstelt het standaardblauw.
 - De gekozen kleur bepaalt het volledige lichte of donkere thema: achtergronden, panelen, invoervelden, knoppen, randen, menu's en hulpvensters kleuren mee. Tekstcontrast wordt automatisch aangepast; fout- en postingstatussen behouden hun betekenis.
