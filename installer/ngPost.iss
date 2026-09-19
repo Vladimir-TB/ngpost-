@@ -12,25 +12,36 @@
   #define MyExtraExcludes ",vc_redist.x64.exe"
 #endif
 
-#define MyAppName "ngPost"
-#define MyAppVersion "5.1.1"
+#ifndef MyAppName
+  #define MyAppName "ngPost"
+#endif
+#ifndef MyAppId
+  #define MyAppId "{{0D9414AA-FE44-4964-BB95-0143DBDDBF09}}"
+#endif
+#define MyAppVersion "5.1.2-rc1"
 #define MyAppPublisher "spotnet.team"
 #define MyAppExeName "ngPost.exe"
 #define MyAppDir "..\dist-qt6"
-#define MyOutputDir "..\dist-qt6\installer"
+#ifndef MyOutputDir
+  #define MyOutputDir "..\release\5.1.2-rc1-INTERN-UNSIGNED"
+#endif
 #define MyAppIcon "..\src\ngPost.ico"
+#ifndef MyPortableBase
+  #define MyPortableBase "{userdocs}"
+#endif
 
 [Setup]
-AppId={{0D9414AA-FE44-4964-BB95-0143DBDDBF09}}
+AppId={#MyAppId}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
+VersionInfoVersion=5.1.2.0
 AppVerName={#MyAppName} v{#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 DefaultDirName={localappdata}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 OutputDir={#MyOutputDir}
-OutputBaseFilename=ngPost-setup-v{#MyAppVersion}{#MyOutputSuffix}
+OutputBaseFilename=ngPost-setup-v{#MyAppVersion}{#MyOutputSuffix}-UNSIGNED
 SetupIconFile={#MyAppIcon}
 UninstallDisplayIcon={app}\ngPost.ico
 PrivilegesRequired=lowest
@@ -39,16 +50,38 @@ SolidCompression=yes
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 WizardStyle=modern
-LicenseFile=voorwaarden.txt
+LanguageDetectionMethod=none
+UsePreviousLanguage=yes
 
 [Languages]
-Name: "dutch"; MessagesFile: "compiler:Languages\Dutch.isl"
+Name: "english"; MessagesFile: "compiler:Default.isl"; LicenseFile: "terms-en.txt"
+Name: "dutch"; MessagesFile: "compiler:Languages\Dutch.isl"; LicenseFile: "voorwaarden.txt"
+
+[CustomMessages]
+english.InstallMode=Installation mode
+dutch.InstallMode=Installatiemodus
+english.ModeTitle=Choose how to use NgPost +.
+dutch.ModeTitle=Kies hoe je NgPost + wilt gebruiken.
+english.ModeBody=Standard installation stores settings in your user profile. Portable mode stores settings next to ngPost.exe.
+dutch.ModeBody=Normale installatie bewaart instellingen in je gebruikersprofiel. Portable modus bewaart instellingen lokaal naast ngPost.exe.
+english.StandardMode=Standard installation (recommended)
+dutch.StandardMode=Normale installatie (aanbevolen)
+english.PortableMode=Portable installation
+dutch.PortableMode=Portable installatie
+english.PortableFolder=Portable folder
+dutch.PortableFolder=Portable map
+english.PortableTitle=Where should the portable version be installed?
+dutch.PortableTitle=Waar moet de portable versie komen?
+english.PortableBody=Choose the folder for the portable version. NgPost + stores its configuration next to ngPost.exe in this mode.
+dutch.PortableBody=Kies de map waarin de portable versie geplaatst wordt. In deze modus bewaart NgPost + de configuratie lokaal naast ngPost.exe.
+english.InstallRuntime=Installing Visual C++ Redistributable...
+dutch.InstallRuntime=Visual C++ Redistributable installeren...
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "{#MyAppDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "installer\*,tmp_test\*,ngPost.conf{#MyExtraExcludes}"
+Source: "{#MyAppDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "installer\*,tmp_test\*,ngPost.conf,portable.mode{#MyExtraExcludes}"
 Source: "{#MyAppIcon}"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
@@ -57,7 +90,7 @@ Name: "{userdesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilen
 
 [Run]
 #if IncludeVCRedist == "1"
-Filename: "{app}\vc_redist.x64.exe"; Parameters: "/install /quiet /norestart"; StatusMsg: "Visual C++ Redistributable installeren..."; Flags: waituntilterminated; Check: VCRedistNeedsInstall
+Filename: "{app}\vc_redist.x64.exe"; Parameters: "/install /quiet /norestart"; StatusMsg: "{cm:InstallRuntime}"; Flags: waituntilterminated; Check: VCRedistNeedsInstall
 #endif
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#MyAppName}}"; Flags: nowait postinstall skipifsilent
 
@@ -73,7 +106,7 @@ end;
 
 function PortableModeDir: string;
 begin
-  Result := ExpandConstant('{userdocs}\{#MyAppName}-portable');
+  Result := ExpandConstant('{#MyPortableBase}\{#MyAppName}-portable');
 end;
 
 function IsPortableMode: Boolean;
@@ -102,27 +135,36 @@ begin
 end;
 
 procedure InitializeWizard();
+var
+  RequestedMode: string;
 begin
   InstallModePage := CreateInputOptionPage(
     wpWelcome,
-    'Installatiemodus',
-    'Kies hoe je NgPost + wilt gebruiken.',
-    'Normale installatie bewaart instellingen in je gebruikersprofiel. Portable modus bewaart instellingen lokaal naast ngPost.exe.',
+    CustomMessage('InstallMode'),
+    CustomMessage('ModeTitle'),
+    CustomMessage('ModeBody'),
     True,
     False);
-  InstallModePage.Add('Normale installatie (aanbevolen)');
-  InstallModePage.Add('Portable installatie');
-  InstallModePage.Values[0] := True;
+  InstallModePage.Add(CustomMessage('StandardMode'));
+  InstallModePage.Add(CustomMessage('PortableMode'));
+  RequestedMode := ExpandConstant('{param:MODE|auto}');
+  InstallModePage.Values[1] := (CompareText(RequestedMode, 'portable') = 0) or
+    ((CompareText(RequestedMode, 'auto') = 0) and FileExists(AddBackslash(WizardForm.DirEdit.Text) + 'portable.mode'));
+  InstallModePage.Values[0] := not InstallModePage.Values[1];
 
   PortableDirPage := CreateInputDirPage(
     InstallModePage.ID,
-    'Portable map',
-    'Waar moet de portable versie komen?',
-    'Kies de map waarin de portable versie geplaatst wordt. In deze modus bewaart NgPost + de configuratie lokaal naast ngPost.exe.',
+    CustomMessage('PortableFolder'),
+    CustomMessage('PortableTitle'),
+    CustomMessage('PortableBody'),
     False,
     SetupMessage(msgNewFolderName));
-  PortableDirPage.Add('Portable map:');
-  PortableDirPage.Values[0] := PortableModeDir();
+  PortableDirPage.Add(CustomMessage('PortableFolder') + ':');
+  PortableDirPage.Values[0] := WizardForm.DirEdit.Text;
+  if (PortableDirPage.Values[0] = '') or
+     (CompareText(PortableDirPage.Values[0], StandardModeDir()) = 0) then
+    PortableDirPage.Values[0] := PortableModeDir();
+  Log('Selected setup language: ' + ActiveLanguage());
 end;
 
 function NextButtonClick(CurPageID: Integer): Boolean;

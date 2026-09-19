@@ -18,6 +18,9 @@
 //========================================================================
 
 #include "PostingJob.h"
+#include <QPointer>
+#include <QFutureWatcher>
+#include <QtConcurrent>
 #include "NgPost.h"
 #include "NntpConnection.h"
 #include "nntp/NntpServerParams.h"
@@ -225,6 +228,25 @@ void PostingJob::onImmediateSpeedComputation()
 
 void PostingJob::onStartPosting(bool isActiveJob)
 {
+    if (_cancelRequested || _finishing) return;
+#ifdef __USE_TMP_RAM__
+    if ((_doCompress || _doPar2) && _ngPost->useTmpRam() && _sourceSize < 0) {
+        if (_sizing) return;
+        _sizing = true;
+        const auto files = _files;
+        auto *watcher = new QFutureWatcher<qint64>(this);
+        connect(watcher, &QFutureWatcher<qint64>::finished, this, [this, watcher, isActiveJob] {
+            _sourceSize = watcher->result(); watcher->deleteLater(); _sizing = false;
+            onStartPosting(isActiveJob);
+        });
+        watcher->setFuture(QtConcurrent::run([files] {
+            qint64 size = 0;
+            for (const auto &file : files) size += NgPost::recursiveSize(file);
+            return size;
+        }));
+        return;
+    }
+#endif
     _isActiveJob = isActiveJob;
 #ifdef __DEBUG__
 qDebug() << "[MB_TRACE][Issue#82][PostingJob::onStartPosting] job: " << this
@@ -242,9 +264,7 @@ qDebug() << "[MB_TRACE][Issue#82][PostingJob::onStartPosting] job: " << this
 #ifdef __USE_TMP_RAM__
         if (_ngPost->useTmpRam())
         {
-            qint64 sourceSize = 0;
-            for (const QFileInfo &fi : _files)
-                sourceSize += NgPost::recursiveSize(fi);
+            const qint64 sourceSize = _sourceSize;
 
             double sourceSizeWithRatio = _ngPost->ramRatio() * sourceSize,
                     availableSize = static_cast<double>(_ngPost->ramAvailable());
@@ -274,9 +294,7 @@ qDebug() << "[MB_TRACE][Issue#82][PostingJob::onStartPosting] job: " << this
 #ifdef __USE_TMP_RAM__
         if (_ngPost->useTmpRam())
         {
-            qint64 sourceSize = 0;
-            for (const QFileInfo &fi : _files)
-                sourceSize += NgPost::recursiveSize(fi);
+            const qint64 sourceSize = _sourceSize;
 
             double par2Size = (_ngPost->ramRatio() - 1) * sourceSize,
                     availableSize = static_cast<double>(_ngPost->ramAvailable());
@@ -307,7 +325,8 @@ qDebug() << "[MB_TRACE][Issue#82][PostingJob::onStartPosting] job: " << this
 
 #include "Poster.h"
 void PostingJob::_postFiles()
-{    
+{
+    if (_cancelRequested || _finishing) return;
     _postStarted = true;
 
 #ifdef __USE_HMI__
@@ -358,7 +377,7 @@ void PostingJob::_postFiles()
         return;
     }
 
-    if (!_nzb->open(QIODevice::WriteOnly))
+    if (!_nzb->open(QIODevice::WriteOnly | (_overwriteNzb ? QIODevice::Truncate : QIODevice::NewOnly)))
     {
         _error(tr("Error: Can't create nzb output file: %1").arg(_nzbFilePath));
         emit postingFinished();
@@ -440,20 +459,18 @@ void PostingJob::_postFiles()
 
 void PostingJob::onStopPosting()
 {
-    if (_extProc)
+    if (_cancelRequested || _finishing) return;
+    _cancelRequested = true;
+    if (_extProc && _extProc->state() != QProcess::NotRunning)
     {
-        _log(tr("killing external process..."));
+        QPointer<QProcess> process(_extProc);
         _extProc->terminate();
-        _extProc->waitForFinished();
+        QTimer::singleShot(3000, this, [process] {
+            if (process && process->state() != QProcess::NotRunning) process->kill();
+        });
     }
-    else
-    {
-        _finishPosting();
-        emit postingFinished();
-    }
+    else _finishPosting();
 }
-
-
 void PostingJob::onDisconnectedConnection(NntpConnection *con)
 {
     if (MB_LoadAtomic(_stopPosting))
@@ -472,8 +489,6 @@ void PostingJob::onDisconnectedConnection(NntpConnection *con)
             if (con->hasNoMoreFiles())
             {
                 _finishPosting();
-                if (!_postFinished)
-                    emit noMoreConnection();
             }
             else
             {
@@ -488,8 +503,6 @@ void PostingJob::onDisconnectedConnection(NntpConnection *con)
                 else
                 {
                     _finishPosting();
-                    if (!_postFinished)
-                        emit noMoreConnection();
                 }
             }
         }
@@ -505,6 +518,8 @@ void PostingJob::onNntpFileStartPosting()
 
 void PostingJob::onNntpFilePosted()
 {
+    // A final acknowledgement can already be queued when connection shutdown begins.
+    if (_completionEmitted) return;
     NntpFile *nntpFile = static_cast<NntpFile*>(sender());
     _totalSize += static_cast<quint64>(nntpFile->fileSize());
     ++_nbPosted;
@@ -526,13 +541,12 @@ void PostingJob::onNntpFilePosted()
 
         _postFinished = true;
         _finishPosting();
-
-        emit postingFinished();
     }
 }
 
 void PostingJob::onNntpErrorReading()
 {
+    if (_completionEmitted) return;
     NntpFile *nntpFile = static_cast<NntpFile*>(sender());
     ++_nbPosted;
     if (_postWidget)
@@ -552,8 +566,6 @@ void PostingJob::onNntpErrorReading()
 
         _postFinished = true;
         _finishPosting();
-
-        emit postingFinished();
     }
 }
 
@@ -763,17 +775,30 @@ void PostingJob::_initPosting()
 
 void PostingJob::_finishPosting()
 {
-#ifdef __DEBUG__
-qDebug() << "[MB_TRACE][PostingJob::_finishPosting]";
-#endif
+    if (_finishing) return;
+    _finishing = true;
     _stopPosting = 0x1;
-
-    if (_timeStart.isValid() && _postFinished)
-    {
-        _nbArticlesUploaded = _nbArticlesTotal; // we might not have processed the last onArticlePosted
-        _uploadedSize       = _totalSize;
+    _resumeTimer.stop();
+    for (NntpConnection *con : _nntpConnections) emit con->killConnection();
+    _postersStopping = _posters.size();
+    if (!_postersStopping) {
+        QTimer::singleShot(0, this, &PostingJob::_completeFinishPosting);
+        return;
     }
+    for (Poster *poster : _posters)
+        poster->stopThreadsAsync(this, [this] {
+            if (--_postersStopping == 0) _completeFinishPosting();
+        });
+}
 
+void PostingJob::_completeFinishPosting()
+{
+    if (_completionEmitted) return;
+    _completionEmitted = true;
+    if (_timeStart.isValid() && _postFinished) {
+        _nbArticlesUploaded = _nbArticlesTotal;
+        _uploadedSize = _totalSize;
+    }
     if (_ngPost->debugMode())
         _log("Finishing posting...");
 
@@ -784,20 +809,7 @@ qDebug() << "[MB_TRACE][PostingJob::_finishPosting]";
         _printStats();
 
 
-    for (NntpConnection *con : _nntpConnections)
-        emit con->killConnection();
-
-    qApp->processEvents();
-
-
-    // 4.: stop and wait for all threads
-    // 2.: close nzb file
     _closeNzb();
-
-
-    // 3.: close all the connections (they're living in the _threadPool)
-    for (Poster *poster : _posters)
-        poster->stopThreads();
 
     if (_ngPost->debugMode())
         _log("All posters stopped...");
@@ -840,6 +852,7 @@ qDebug() << "[MB_TRACE][PostingJob::_finishPosting]";
     }
     else if (_postFinished && MB_LoadAtomic(_delFilesAfterPost))
         _delOriginalFiles();
+    emit postingFinished();
 }
 
 void PostingJob::_closeNzb()
@@ -914,6 +927,11 @@ bool PostingJob::startCompressFiles(const QString &cmdRar,
         return false;
 
     _extProc = new QProcess(this);
+    connect(_extProc, &QProcess::errorOccurred, this, [this](QProcess::ProcessError error) {
+        if (error == QProcess::FailedToStart) {
+            _error(tr("Could not start the archive tool.")); _finishPosting();
+        }
+    });
     connect(_extProc, &QProcess::readyReadStandardOutput, this, &PostingJob::onExtProcReadyReadStandardOutput, Qt::DirectConnection);
     connect(_extProc, &QProcess::readyReadStandardError,  this, &PostingJob::onExtProcReadyReadStandardError,  Qt::DirectConnection);
     connect(_extProc, static_cast<void(QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
@@ -1080,7 +1098,7 @@ void PostingJob::onCompressionFinished(int exitCode)
     }
 
 
-    if (exitCode != 0)
+    if (exitCode != 0 || _cancelRequested)
     {
         _error(tr("Error during compression: %1").arg(exitCode));
         _cleanCompressDir();
@@ -1196,6 +1214,11 @@ bool PostingJob::startGenPar2(const QString &tmpFolder,
             return false;
 
         _extProc = new QProcess(this);
+        connect(_extProc, &QProcess::errorOccurred, this, [this](QProcess::ProcessError error) {
+            if (error == QProcess::FailedToStart) {
+                _error(tr("Could not start the parity tool.")); _finishPosting();
+            }
+        });
         connect(_extProc, &QProcess::readyReadStandardOutput, this, &PostingJob::onExtProcReadyReadStandardOutput, Qt::DirectConnection);
         connect(_extProc, &QProcess::readyReadStandardError,  this, &PostingJob::onExtProcReadyReadStandardError,  Qt::DirectConnection);
     }
@@ -1224,7 +1247,7 @@ void PostingJob::onGenPar2Finished(int exitCode)
 
     _cleanExtProc();
 
-    if (exitCode != 0)
+    if (exitCode != 0 || _cancelRequested)
     {
         _error(tr("Error during par2 generation: %1").arg(exitCode));
         _cleanCompressDir();

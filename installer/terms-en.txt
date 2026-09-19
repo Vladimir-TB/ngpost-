@@ -1,0 +1,5 @@
+You are responsible for what you upload with ngPost+. Only post material you have the necessary rights to distribute, such as your own work or material shared with the rights holder's permission.
+
+ngPost+ does not grant rights to third-party material. Do not upload material in breach of copyright or other applicable law. The app does not guarantee anonymity.
+
+This notice does not limit any liability that cannot legally be excluded. The GPLv3 license for ngPost+ and the separate licenses of bundled components remain applicable; this notice does not restrict the rights granted by those licenses.

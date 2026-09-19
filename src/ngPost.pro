@@ -1,7 +1,7 @@
 CONFIG  += use_hmi
 
 use_hmi {
-    QT += gui
+    QT += gui concurrent
     greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
     DEFINES += __USE_HMI__
@@ -23,6 +23,8 @@ SOURCES += \
     hmi/PostingWidget.cpp \
     hmi/SignedListWidget.cpp \
     hmi/MainWindow.cpp
+SOURCES += hmi/SessionBatch.cpp
+HEADERS += hmi/SessionBatch.h
 
 HEADERS += \
     hmi/AboutNgPost.h \

@@ -1,118 +1,47 @@
-$ErrorActionPreference = "Stop"
-
-$root = Split-Path -Parent $MyInvocation.MyCommand.Path
-$src = Join-Path $root "src"
-$build = Join-Path $root "build-qt6"
-$qtBin = Join-Path $root ".qt\6.8.3\msvc2022_64\bin"
-$vcvars = "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat"
-
-if (!(Test-Path $qtBin)) {
-    throw "Qt 6.8.3 toolchain not found at $qtBin"
+$ErrorActionPreference = 'Stop'
+$projectRoot = $PSScriptRoot
+$qtBin = Join-Path $projectRoot '.qt\6.8.3\msvc2022_64\bin'
+$build = Join-Path $projectRoot 'build-qt6'
+$dist = Join-Path $projectRoot 'dist-qt6'
+$stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
+$staging = Join-Path $projectRoot "artifacts\distribution-staging\$stamp"
+New-Item -ItemType Directory $build,$staging -Force | Out-Null
+foreach($language in @('nl','en','de')) {
+    & (Join-Path $qtBin 'lrelease.exe') (Join-Path $projectRoot "src\lang\ngPost_$language.ts") '-qm' (Join-Path $projectRoot "src\resources\lang\ngPost_$language.qm")
+    if ($LASTEXITCODE -ne 0) { throw "Translation failed: $language" }
 }
-
-if (!(Test-Path $vcvars)) {
-    throw "Visual Studio vcvars64.bat not found at $vcvars"
+$command = 'call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat" && cd /d "{0}" && "{1}\qmake.exe" "..\src\ngPost.pro" && nmake /f Makefile.Release' -f $build,$qtBin
+cmd /c $command
+if ($LASTEXITCODE -ne 0) { throw 'Qt build failed' }
+Copy-Item -LiteralPath (Join-Path $build 'release\ngPost.exe') -Destination $staging
+& (Join-Path $qtBin 'windeployqt.exe') --release --no-translations --no-system-d3d-compiler --no-opengl-sw --dir $staging (Join-Path $staging 'ngPost.exe')
+if ($LASTEXITCODE -ne 0) { throw 'Qt runtime deployment failed' }
+# QtConcurrent's template-only call sites may not appear in the PE import table.
+Copy-Item -LiteralPath (Join-Path $qtBin 'Qt6Concurrent.dll') -Destination $staging
+foreach ($tool in @('rar.exe','par2.exe')) {
+    $candidate = @((Join-Path $dist $tool),(Join-Path $projectRoot "dist\$tool")) | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+    if (-not $candidate) { throw "Bundled tool missing: $tool. Supply an authorized binary in dist-qt6." }
+    Copy-Item -LiteralPath $candidate -Destination $staging
 }
-
-if (!(Test-Path $build)) {
-    New-Item -ItemType Directory -Path $build | Out-Null
+if (-not (Test-Path (Join-Path $staging 'vc_redist.x64.exe'))) { Copy-Item -LiteralPath (Join-Path $dist 'vc_redist.x64.exe') -Destination $staging }
+foreach($required in @('ngPost.exe','Qt6Concurrent.dll','Qt6Core.dll','Qt6Gui.dll','Qt6Widgets.dll','Qt6Network.dll','platforms\qwindows.dll')) {
+    if (-not (Test-Path (Join-Path $staging $required))) { throw "Incomplete runtime: $required" }
 }
-
-# Force a clean Qt 6 rebuild so version and resource changes are never
-# skipped by incremental make state.
-$releaseDir = Join-Path $build "release"
-if (Test-Path $releaseDir) {
-    Remove-Item $releaseDir -Recurse -Force
+Copy-Item -LiteralPath (Join-Path $projectRoot 'LICENSE') -Destination $staging
+$notices = Join-Path $staging 'notices'
+New-Item -ItemType Directory $notices -Force | Out-Null
+Copy-Item -LiteralPath (Join-Path $projectRoot 'installer\voorwaarden.txt'),(Join-Path $projectRoot 'installer\terms-en.txt') -Destination $notices
+Set-Content -LiteralPath (Join-Path $staging 'portable.mode') -Value 'portable=1' -Encoding ascii
+# Preserve configuration and archive the complete former distribution before replacement.
+if (Test-Path -LiteralPath (Join-Path $dist 'ngPost.conf')) { Copy-Item -LiteralPath (Join-Path $dist 'ngPost.conf') -Destination $staging }
+if (Test-Path -LiteralPath $dist) {
+    $resolved = (Resolve-Path -LiteralPath $dist).Path
+    if ($resolved -ne (Join-Path $projectRoot 'dist-qt6')) { throw 'Unexpected distribution path' }
+    $backup = Join-Path $projectRoot "artifacts\distribution-backups\$stamp"
+    New-Item -ItemType Directory $backup -Force | Out-Null
+    Move-Item -LiteralPath $resolved -Destination (Join-Path $backup 'dist-qt6')
 }
-Get-ChildItem -Path $build -Filter "Makefile*" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
-
-# Remove stale in-source generated UI headers so the Qt 6 build always
-# uses the freshly generated headers from the build directory.
-Get-ChildItem -Path $src -Filter "ui_*.h" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
-
-# Force regeneration of the Windows icon resource when ngPost.ico changes.
-$resourceRc = Join-Path $build "ngPost_resource.rc"
-$resourceRes = Join-Path $build "release\ngPost_resource.res"
-if (Test-Path $resourceRc) {
-    Remove-Item $resourceRc -Force
-}
-if (Test-Path $resourceRes) {
-    Remove-Item $resourceRes -Force
-}
-
-& (Join-Path $qtBin "lrelease.exe") (Join-Path $src "lang\ngPost_nl.ts") "-qm" (Join-Path $src "resources\lang\ngPost_nl.qm")
-& (Join-Path $qtBin "lrelease.exe") (Join-Path $src "lang\ngPost_en.ts") "-qm" (Join-Path $src "resources\lang\ngPost_en.qm")
-& (Join-Path $qtBin "lrelease.exe") (Join-Path $src "lang\ngPost_de.ts") "-qm" (Join-Path $src "resources\lang\ngPost_de.qm")
-
-$cmd = "call `"$vcvars`" && cd /d `"$build`" && `"$qtBin\qmake.exe`" `"..\src\ngPost.pro`" && nmake /f Makefile.Release && `"$qtBin\windeployqt.exe`" --release --no-translations --no-system-d3d-compiler --no-opengl-sw `"$build\release\ngPost.exe`""
-cmd /c $cmd
-
-$release = Join-Path $build "release"
-$dist = Join-Path $root "dist-qt6"
-if (Test-Path $dist) {
-    Remove-Item $dist -Recurse -Force
-}
-New-Item -ItemType Directory -Path $dist | Out-Null
-
-$runtimeFiles = @(
-    "ngPost.exe",
-    "Qt6Core.dll",
-    "Qt6Gui.dll",
-    "Qt6Network.dll",
-    "Qt6Svg.dll",
-    "Qt6Widgets.dll",
-    "dxcompiler.dll",
-    "dxil.dll",
-    "vc_redist.x64.exe"
-)
-foreach ($name in $runtimeFiles) {
-    $source = Join-Path $release $name
-    if (Test-Path $source) {
-        Copy-Item $source $dist -Force
-    }
-}
-
-$pluginDirs = @(
-    "generic",
-    "iconengines",
-    "imageformats",
-    "networkinformation",
-    "platforms",
-    "styles",
-    "tls"
-)
-foreach ($dirName in $pluginDirs) {
-    $sourceDir = Join-Path $release $dirName
-    if (Test-Path $sourceDir) {
-        Copy-Item $sourceDir (Join-Path $dist $dirName) -Recurse -Force
-    }
-}
-
-$rarCandidates = @(
-    (Join-Path $root "dist\rar.exe"),
-    (Join-Path (Split-Path $root -Parent) "ngPost-master\dist\rar.exe")
-)
-foreach ($rarPath in $rarCandidates) {
-    if (Test-Path $rarPath) {
-        Copy-Item $rarPath (Join-Path $dist "rar.exe") -Force
-        break
-    }
-}
-
-$par2Candidates = @(
-    (Join-Path $root "dist\par2.exe"),
-    (Join-Path (Split-Path $root -Parent) "ngPost-master\dist\par2.exe"),
-    "C:\Program Files\SABnzbd\win\par2\par2.exe",
-    "C:\Program Files\Spotlite\sabnzbd\win\par2\par2.exe"
-)
-foreach ($par2Path in $par2Candidates) {
-    if (Test-Path $par2Path) {
-        Copy-Item $par2Path (Join-Path $dist "par2.exe") -Force
-        break
-    }
-}
-
-Write-Host ""
-Write-Host "Qt 6 build ready:"
-Write-Host "  $build\release\ngPost.exe"
-Write-Host "  $dist\ngPost.exe"
+$resolvedStaging = (Resolve-Path -LiteralPath $staging).Path
+if (-not $resolvedStaging.StartsWith((Join-Path $projectRoot 'artifacts\distribution-staging\'))) { throw 'Unexpected staging path' }
+Move-Item -LiteralPath $resolvedStaging -Destination $dist
+Write-Host "Portable bijgewerkt: $dist\ngPost.exe"

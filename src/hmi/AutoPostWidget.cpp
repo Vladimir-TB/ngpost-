@@ -250,47 +250,8 @@ void AutoPostWidget::applyUiScale(double scale)
 
 void AutoPostWidget::onGenQuickPosts()
 {
-    bool compress = _ui->compressCB->isChecked();
-
-    QFileInfoList files;
-    for (int i = 0 ; i < _ui->filesList->count() ; ++i)
-    {
-        QFileInfo fileInfo(_ui->filesList->item(i)->text());
-        if (fileInfo.exists())
-            files << fileInfo;
-        if (!compress && fileInfo.isDir())
-        {
-            _ngPost->error(tr("You can't use auto posting without compression on folders... (%1)").arg(fileInfo.fileName()));
-            return ;
-        }
-    }
-    if (files.isEmpty())
-    {
-        QMessageBox::warning(nullptr,
-                             tr("Nothing to post..."),
-                             tr("There is nothing to post!\n\
-Press the Scan button and remove what you don't want to post ;)\n\
-(To remove files, select in the list and press DEL or BackSpace)"));
-        return;
-    }
-
-    _hmi->updateServers();
-    _hmi->updateParams();
-    udatePostingParams();
-
-    bool startPost = _ui->startJobsCB->isChecked(),
-         useRarMax = _ui->rarMaxCB->isChecked();
-    for (const QFileInfo &file : files)
-    {
-        PostingWidget *quickPostWidget = _hmi->addNewQuickTab(0, {file});
-        quickPostWidget->init();
-        quickPostWidget->genNameAndPassword(_ngPost->_genName, _ngPost->_genPass, _ngPost->_doPar2, useRarMax);
-
-        if (startPost)
-            quickPostWidget->postFiles(false);
-    }
+    beginFileBatch(true);
 }
-
 
 void AutoPostWidget::onCompressPathClicked()
 {
@@ -336,18 +297,7 @@ void AutoPostWidget::onSelectAutoDirClicked()
 
 void AutoPostWidget::onScanAutoDirClicked()
 {
-    QDir autoDir(_ui->autoDirEdit->text());
-    if (autoDir.exists())
-    {
-        _ui->filesList->clear2();
-        QDir::SortFlags sort = _ui->latestFilesFirstCB->isChecked() ? QDir::Time : QDir::Name;
-        for (const QFileInfo &file : autoDir.entryInfoList(QDir::Files|QDir::Dirs|QDir::NoDotAndDotDot, sort))
-            _ui->filesList->addPathIfNotInList(file.absoluteFilePath(), 0, file.isDir());
-    }
-    else
-        QMessageBox::warning(nullptr,
-                             tr("No auto directory selected..."),
-                             tr("There is no auto directory!\nPlease select one."));
+    beginFileBatch(false);
 }
 
 void AutoPostWidget::onMonitoringClicked()
@@ -484,6 +434,117 @@ void AutoPostWidget::onGenPar2Toggled(bool checked)
 }
 
 #include "PostingJob.h"
+#include <QFutureWatcher>
+#include <QtConcurrent>
+#include <QProgressDialog>
+#include <QElapsedTimer>
+
+void AutoPostWidget::beginFileBatch(bool generate)
+{
+    if (property("batchBusy").toBool() || _isMonitoring)
+        return;
+    _batchGenerate = generate;
+    _batchIndex = 0;
+    _batchSessions.clear();
+    _batchFiles.clear();
+    _batchCancelled = std::make_shared<std::atomic_bool>(false);
+    QStringList paths;
+    if (generate)
+    {
+        for (int i = 0; i < _ui->filesList->count(); ++i)
+            paths << _ui->filesList->item(i)->text();
+        if (paths.isEmpty())
+            return;
+        _hmi->updateServers();
+        _hmi->updateParams();
+        udatePostingParams();
+        _batchStart = _ui->startJobsCB->isChecked();
+        _batchName = _ngPost->_genName;
+        _batchPass = _ngPost->_genPass;
+        _batchPar2 = _ngPost->_doPar2;
+        _batchRarMax = _ui->rarMaxCB->isChecked();
+    }
+    const QString directory = _ui->autoDirEdit->text();
+    const bool latest = _ui->latestFilesFirstCB->isChecked();
+    const bool compress = _ui->compressCB->isChecked();
+    const auto cancelled = _batchCancelled;
+    setProperty("batchBusy", true);
+    if (generate) _ngPost->beginBatchPreparation();
+    _batchProgress = new QProgressDialog(tr("Reading folders..."), tr("Cancel"), 0, 0, _hmi);
+    _batchProgress->setObjectName("folderBatchProgress");
+    _batchProgress->setWindowModality(Qt::WindowModal);
+    _batchProgress->setMinimumDuration(0);
+    connect(_batchProgress, &QProgressDialog::canceled, this, [cancelled] { *cancelled = true; });
+    _batchProgress->show();
+    auto *watcher = new QFutureWatcher<QFileInfoList>(this);
+    connect(watcher, &QFutureWatcher<QFileInfoList>::finished, this, [this, watcher] {
+        _batchFiles = watcher->result();
+        watcher->deleteLater();
+        if (*_batchCancelled) { finishFileBatch(); return; }
+        if (!_batchGenerate) _ui->filesList->clear2();
+        _batchProgress->setLabelText(_batchGenerate ? tr("Preparing sessions...") : tr("Adding folders..."));
+        _batchProgress->setRange(0, qMax(1, int(_batchFiles.size())));
+        _batchTimer.disconnect(this);
+        connect(&_batchTimer, &QTimer::timeout, this, &AutoPostWidget::processFileBatch);
+        _batchTimer.start(1);
+    });
+    watcher->setFuture(QtConcurrent::run([paths, directory, latest, generate, compress, cancelled] {
+        QFileInfoList result;
+        QSet<QString> seen;
+        const QFileInfoList candidates = generate || directory.trimmed().isEmpty() ? QFileInfoList() : QDir(directory).entryInfoList(
+            QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot, latest ? QDir::Time : QDir::Name);
+        auto add = [&](const QFileInfo &file) {
+            if (*cancelled || !file.exists() || !file.isReadable() || (generate && file.isDir() && !compress)) return;
+            QString key = file.absoluteFilePath();
+#ifdef Q_OS_WIN
+            key = key.toCaseFolded();
+#endif
+            if (!seen.contains(key)) { seen.insert(key); result << file; }
+        };
+        if (generate) { for (const QString &path : paths) { if (*cancelled) break; add(QFileInfo(path)); } }
+        else { for (const QFileInfo &file : candidates) { if (*cancelled) break; add(file); } }
+        return result;
+    }));
+}
+
+void AutoPostWidget::processFileBatch()
+{
+    if (*_batchCancelled) { finishFileBatch(); return; }
+    // At most one expensive widget per event; list-only insertion gets a small time budget.
+    QElapsedTimer budget; budget.start();
+    do {
+        if (_batchIndex >= _batchFiles.size()) { finishFileBatch(); return; }
+        const QFileInfo file = _batchFiles.at(_batchIndex++);
+        if (_batchGenerate)
+        {
+            auto *session = _hmi->addNewQuickTab(0, {file}, false);
+            session->genNameAndPassword(_batchName, _batchPass, _batchPar2, _batchRarMax);
+            _batchSessions << session;
+        }
+        else _ui->filesList->addPath(file.absoluteFilePath(), file.isDir());
+    } while (!_batchGenerate && budget.elapsed() < 8);
+    _batchProgress->setValue(_batchIndex);
+}
+
+void AutoPostWidget::finishFileBatch()
+{
+    _batchTimer.stop();
+    const bool start = _batchGenerate && _batchStart && !*_batchCancelled;
+    _batchProgress->hide();
+    _batchProgress->deleteLater();
+    _batchProgress = nullptr;
+    setProperty("batchBusy", false);
+    _hmi->finishAddingTabs();
+    if (_batchFiles.isEmpty() && !*_batchCancelled)
+        _ngPost->error(tr("No readable files or folders were found."));
+    QList<PostingWidget *> sessions;
+    for (const auto &session : _batchSessions) if (session) sessions << session;
+    _batchSessions.clear();
+    _batchFiles.clear();
+    if (start) _hmi->startSessions(sessions);
+    if (_batchGenerate) _ngPost->endBatchPreparation();
+}
+
 void AutoPostWidget::onMonitorJobStart()
 {
     PostingJob *job = static_cast<PostingJob*>(sender());

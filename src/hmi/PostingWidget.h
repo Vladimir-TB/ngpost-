@@ -48,6 +48,9 @@ private:
     bool               _postingFinished;
     QPushButton       *_advancedToggleButton;
     bool               _advancedVisible;
+    bool _initialized = false;
+    QString _lastNzbName, _lastArchiveName, _lastArchivePassword;
+    bool _hasFinalMetadata = false;
 
 public:
     explicit PostingWidget(NgPost *ngPost, MainWindow *hmi, uint jobNumber);
@@ -78,6 +81,10 @@ public:
     void setPackingAuto(bool enabled, const QStringList &keys);
 
     void postFiles(bool updateMainParams);
+    bool readyForBatch(bool includeCompleted = false) const;
+    PostingJob *preparePosting(QString &error);
+    void enqueuePrepared(PostingJob *job);
+    QString effectiveArchivePassword() const;
 
 
 public slots: // for PostingJob

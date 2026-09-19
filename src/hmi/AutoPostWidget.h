@@ -21,6 +21,13 @@
 #define AUTOPOSTWIDGET_H
 
 #include <QWidget>
+#include <QFileInfoList>
+#include <QTimer>
+#include <QPointer>
+#include <atomic>
+#include <memory>
+class QProgressDialog;
+class PostingWidget;
 class NgPost;
 class MainWindow;
 class QFileInfo;
@@ -42,6 +49,14 @@ private:
     int                 _currentPostIdx;
     QPushButton        *_advancedToggleButton;
     bool                _advancedVisible;
+    QFileInfoList _batchFiles;
+    QList<QPointer<PostingWidget>> _batchSessions;
+    QTimer _batchTimer;
+    QProgressDialog *_batchProgress = nullptr;
+    std::shared_ptr<std::atomic_bool> _batchCancelled;
+    int _batchIndex = 0;
+    bool _batchGenerate = false, _batchStart = false;
+    bool _batchName = false, _batchPass = false, _batchPar2 = false, _batchRarMax = false;
 
 public:
     explicit AutoPostWidget(NgPost *ngPost, MainWindow *hmi);
@@ -82,6 +97,9 @@ private slots:
     void onGenPar2Toggled(bool checked);
 
 private:
+    void beginFileBatch(bool generate);
+    void processFileBatch();
+    void finishFileBatch();
     void _rebuildModernLayout();
     void _setAdvancedSectionVisible(bool visible);
     void _refreshAdvancedToggleButtonGeometry();

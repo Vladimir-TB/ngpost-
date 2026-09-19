@@ -1,5 +1,7 @@
 # Uitvoerbaarheidsplan GitHub-issues 1, 2 en 3
 
+**HISTORISCH — onderzoek en ontwerp vóór uitvoering.** De implementatie, actuele controlebewijzen en resterende punten staan in [STATUS.md](../STATUS.md). De onderstaande codeposities en uitspraken over nog niet geïmplementeerde functies beschrijven de oorspronkelijke onderzoeksbasis.
+
 Onderzoeksdatum: 19 september 2026. Onderzochte lokale bron: `3e82949` (Qt 6.8.3, bronversie 5.1.1). Doel: aanpak en acceptatiecriteria bepalen; de hieronder beschreven functies zijn nog niet geïmplementeerd.
 
 ## Advies

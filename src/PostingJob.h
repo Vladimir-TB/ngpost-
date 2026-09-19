@@ -138,7 +138,7 @@ private:
 
     QVector<Poster*> _posters;
 
-    const bool  _overwriteNzb;
+    bool        _overwriteNzb;
 
     QMap<QString, QString> _obfuscatedFileNames;
 
@@ -226,6 +226,10 @@ public:
     inline bool isPaused() const;
 
     inline const QString &nzbFilePath() const;
+    const QFileInfoList &sourceFiles() const { return _files; }
+    void setOutputTarget(const QString &path, bool overwrite) {
+        _nzbFilePath = path; _nzbName = QFileInfo(path).fileName(); _overwriteNzb = overwrite;
+    }
 
     inline static QString humanSize(double size);
 
@@ -294,6 +298,13 @@ private:
     void _initPosting();
     void _postFiles();
     void _finishPosting();
+    void _completeFinishPosting();
+    bool _finishing = false;
+    bool _completionEmitted = false;
+    bool _cancelRequested = false;
+    qint64 _sourceSize = -1;
+    bool _sizing = false;
+    int _postersStopping = 0;
 
     void _closeNzb();
     void _printStats() const;    

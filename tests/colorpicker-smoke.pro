@@ -10,5 +10,8 @@ CONFIG -= windows
 CONFIG += console
 productionObjects = $$files($$PWD/../build-qt6/release/*.obj)
 for(object, productionObjects) {
-    !contains(object, .*/main[.]obj$): LIBS += $$object
+    !contains(object, .*/main[.]obj$) {
+        LIBS += $$object
+        PRE_TARGETDEPS += $$object
+    }
 }

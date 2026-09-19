@@ -21,6 +21,7 @@
 #include "ui_MainWindow.h"
 #include "PostingWidget.h"
 #include "AutoPostWidget.h"
+#include "SessionBatch.h"
 #include "NgPost.h"
 #include "nntp/NntpServerParams.h"
 #include "nntp/NntpArticle.h"
@@ -55,6 +56,7 @@
 #include <QTimer>
 #include <QVBoxLayout>
 #include <QWindow>
+#include <QProgressDialog>
 #include <cmath>
 
 namespace {
@@ -508,17 +510,27 @@ void MainWindow::dropEvent(QDropEvent *e)
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
+    if (property("sessionBatchBusy").toBool() || (_autoPostTab && _autoPostTab->property("batchBusy").toBool())) {
+        for (auto *progress : findChildren<QProgressDialog *>()) {
+            QMetaObject::invokeMethod(progress, "canceled");
+            progress->cancel();
+        }
+        event->ignore();
+        return;
+    }
     if (_ngPost->hasPostingJobs())
     {
-        int res = QMessageBox::question(this,
+        int res = _closingAfterPosts ? QMessageBox::Yes : QMessageBox::question(this,
                                         tr("close while still posting?"),
                                         tr("ngPost is currently posting.\nAre you sure you want to quit?").replace("ngPost", NgPost::displayName()),
                                         QMessageBox::Yes,
                                         QMessageBox::No);
         if (res == QMessageBox::Yes)
         {
-            _ngPost->closeAllPostingJobs();
-            event->accept();
+            if (!_closingAfterPosts) _ngPost->closeAllPostingJobs();
+            _closingAfterPosts = true;
+            event->ignore();
+            QTimer::singleShot(100, this, [this] { close(); });
         }
         else
             event->ignore();
@@ -1162,6 +1174,18 @@ void MainWindow::_buildModernShell()
     navLayout->addWidget(_overviewNavButton);
     navLayout->addWidget(_autoNavButton);
     navLayout->addWidget(_activityNavButton);
+    auto *startAll = new QPushButton(tr("Start all sessions"), topHeader);
+    startAll->setObjectName("startAllSessionsButton");
+    startAll->setProperty("shellRole", "secondaryAction");
+    startAll->setToolTip(tr("Queue ready sessions in tab order. Uploads run one at a time."));
+    navLayout->addWidget(startAll);
+    connect(startAll, &QPushButton::clicked, this, [this] {
+        QList<PostingWidget *> sessions;
+        for (int i = 0; i < _ui->postTabWidget->count(); ++i)
+            if (auto *session = qobject_cast<PostingWidget *>(_tabPageContent(i)))
+                if (session->readyForBatch()) sessions << session;
+        if (!sessions.isEmpty()) startSessions(sessions);
+    });
     navLayout->addStretch(1);
 
     connect(_overviewNavButton, &QPushButton::clicked, this, [this]() { _setShellView(ShellView::Overview); });
@@ -1223,6 +1247,10 @@ void MainWindow::_buildModernShell()
     bottomRow->addLayout(navLayout, 2);
     bottomRow->addWidget(_overviewStatsFrame, 5);
     topHeaderLayout->addLayout(bottomRow);
+    auto *responsibility = new QLabel(topHeader);
+    responsibility->setObjectName("postingResponsibilityLabel");
+    responsibility->setWordWrap(true);
+    topHeaderLayout->addWidget(responsibility);
     shellLayout->addWidget(topHeader);
 
     QFrame *contentCanvas = new QFrame(_shellRoot);
@@ -1631,6 +1659,14 @@ QString MainWindow::_overviewGuideHtml() const
 
 void MainWindow::_refreshShellText()
 {
+    if (auto *notice = findChild<QLabel *>("postingResponsibilityLabel")) {
+        notice->setText(tr("You are responsible for what you upload. Only post material you have the right to distribute."));
+        notice->setToolTip(tr("ngPost+ does not grant rights to third-party material. This notice does not limit any liability that cannot legally be excluded."));
+    }
+    if (auto *button = findChild<QPushButton *>("startAllSessionsButton")) {
+        button->setText(tr("Start all sessions"));
+        button->setToolTip(tr("Queue ready sessions in tab order. Uploads run one at a time."));
+    }
     if (!_shellRoot)
         return;
 
@@ -1847,13 +1883,13 @@ void MainWindow::_refreshQuickTabLabels()
         if (i == 1)
         {
             const QString autoLabel = _ngPost->folderMonitoringName();
-            _ui->postTabWidget->setTabText(i, autoLabel);
+            if (bar->tabText(i) != autoLabel) _ui->postTabWidget->setTabText(i, autoLabel);
             bar->setTabToolTip(i, autoLabel);
             continue;
         }
 
         const QString sessionLabel = tr("Session %1").arg(sessionNumber++);
-        _ui->postTabWidget->setTabText(i, sessionLabel);
+        if (bar->tabText(i) != sessionLabel) _ui->postTabWidget->setTabText(i, sessionLabel);
         bar->setTabToolTip(i, sessionLabel);
     }
 
@@ -2240,27 +2276,45 @@ QWidget *MainWindow::_tabPageContent(int tabIndex) const
     return _ui->postTabWidget->widget(tabIndex);
 }
 
-PostingWidget *MainWindow::addNewQuickTab(int lastTabIdx, const QFileInfoList &files)
+PostingWidget *MainWindow::addNewQuickTab(int lastTabIdx, const QFileInfoList &files, bool activate)
 {
+    const QSignalBlocker blocker(_ui->postTabWidget);
     if (!lastTabIdx)
         lastTabIdx = _ui->postTabWidget->count() -1;
     PostingWidget *newPostingWidget = new PostingWidget(_ngPost, this, static_cast<uint>(lastTabIdx));
     newPostingWidget->init();
     newPostingWidget->applyUiScale(_uiScale);
-    QString tabName = QString("%1 #%2").arg(_ngPost->quickJobName()).arg(lastTabIdx);
+    QString tabName = tr("Session %1").arg(lastTabIdx);
     _ui->postTabWidget->insertTab(lastTabIdx,
                                   _createScrollableTabPage(newPostingWidget),
                                   QIcon(":/icons/quick.png"),
                                   tabName);
     _ui->postTabWidget->setTabToolTip(lastTabIdx, tabName);
-    _ui->postTabWidget->setCurrentIndex(lastTabIdx);
-    _shellView = ShellView::QuickPost;
-    _refreshWorkspaceTabBar();
+    if (activate)
+    {
+        _ui->postTabWidget->setCurrentIndex(lastTabIdx);
+        _shellView = ShellView::QuickPost;
+        _refreshWorkspaceTabBar();
+    }
 
     for (const QFileInfo &file : files)
         newPostingWidget->addPath(file.absoluteFilePath(), 0, file.isDir());
 
     return newPostingWidget;
+}
+
+void MainWindow::finishAddingTabs()
+{
+    _refreshWorkspaceTabBar();
+    _refreshShellSummary();
+}
+
+void MainWindow::startSessions(const QList<PostingWidget *> &sessions, bool includeCompleted)
+{
+    if (property("sessionBatchBusy").toBool()) return;
+    updateServers();
+    updateParams();
+    startSessionBatch(this, _ngPost, sessions, includeCompleted);
 }
 
 void MainWindow::setTab(QWidget *postWidget)

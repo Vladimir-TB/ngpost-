@@ -24,6 +24,7 @@
 #include <QVector>
 #include <QQueue>
 #include <QMutex>
+#include <functional>
 class NgPost;
 class ArticleBuilder;
 class NntpConnection;
@@ -80,6 +81,7 @@ public:
 
     inline void startThreads();
     void stopThreads();
+    void stopThreadsAsync(QObject *context, std::function<void()> finished);
 
     bool prepareArticlesInAdvance();
 

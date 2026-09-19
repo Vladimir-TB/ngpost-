@@ -37,6 +37,7 @@
 #include <QScrollArea>
 #include <QSignalBlocker>
 #include <QClipboard>
+#include <QTimer>
 #include <QMimeData>
 
 namespace {
@@ -95,6 +96,33 @@ PostingWidget::PostingWidget(NgPost *ngPost, MainWindow *hmi, uint jobNumber) :
     connect(_ui->nzbPassCB,  &QAbstractButton::toggled, this, &PostingWidget::onNzbPassToggled);
     connect(_ui->genPass,    &QAbstractButton::clicked, this, &PostingWidget::onGenNzbPassword);
     connect(_ui->filesList, &SignedListWidget::rightClick, this, &PostingWidget::onSelectFilesClicked);
+    auto copyButton = [this](const char *name, const QString &tip, QHBoxLayout *row, auto value) {
+        auto *button = new QPushButton(tr("Copy"), this);
+        button->setObjectName(name);
+        button->setToolTip(tip);
+        button->setAccessibleName(tip);
+        row->insertWidget(2, button);
+        connect(button, &QPushButton::clicked, this, [this, button, value] {
+            const QString text = value();
+            if (text.isEmpty()) return;
+            QApplication::clipboard()->setText(text);
+            button->setText(tr("Copied"));
+            QTimer::singleShot(1200, button, [button] { button->setText(tr("Copy")); });
+        });
+    };
+    copyButton("copyNzbButton", tr("Copy NZB filename"), _ui->nzbFileLayout, [this] {
+        return _hasFinalMetadata ? _lastNzbName : QFileInfo(_ui->nzbFileEdit->text()).fileName();
+    });
+    copyButton("copyPasswordButton", tr("Copy archive password"), _ui->nzbPassLayout, [this] {
+        return _hasFinalMetadata ? _lastArchivePassword : effectiveArchivePassword();
+    });
+    copyButton("copyArchiveButton", tr("Copy archive name"), _ui->compressOptionsLayout, [this] {
+        return _hasFinalMetadata ? _lastArchiveName : (_ui->compressCB->isChecked() ? _ui->compressNameEdit->text() : QString());
+    });
+    for (QLineEdit *edit : {_ui->nzbFileEdit, _ui->nzbPassEdit, _ui->compressNameEdit})
+        connect(edit, &QLineEdit::textChanged, this, [this] { if (!_postingJob) _hasFinalMetadata = false; });
+    for (QCheckBox *box : {_ui->compressCB, _ui->nzbPassCB})
+        connect(box, &QCheckBox::toggled, this, [this] { if (!_postingJob) _hasFinalMetadata = false; });
 }
 
 PostingWidget::~PostingWidget()
@@ -146,6 +174,9 @@ void PostingWidget::onPostingJobDone()
     // This could happen especially when we exceed the number of connections allowed by a provider
     if (!_postingJob)
         return;
+    _lastNzbName = QFileInfo(_postingJob->nzbFilePath()).fileName();
+    _lastArchiveName = _postingJob->hasCompressed() ? _postingJob->rarName() : QString();
+    _lastArchivePassword = _postingJob->rarPass();
 
     if (_postingJob->nbArticlesTotal() > 0)
     {
@@ -170,93 +201,63 @@ void PostingWidget::onPostFiles()
 
 void PostingWidget::postFiles(bool updateMainParams)
 {
+    Q_UNUSED(updateMainParams)
     if (_state == STATE::IDLE)
-    {
-        if (_ui->filesList->count() == 0)
-        {
-            _hmi->logError(tr("There are no selected files to post..."));
-            return;
-        }
-
-        QFileInfoList files;
-        bool hasFolder = false;
-        _buildFilesList(files, hasFolder);
-        if (files.isEmpty())
-        {
-            _hmi->logError(tr("There are no existing files to post..."));
-            return;
-        }
-
-        if (hasFolder && !_ui->compressCB->isChecked())
-        {
-            _hmi->logError(tr("You can't post folders without using compression..."));
-            return;
-        }
-
-
-        if (updateMainParams)
-        {
-            _hmi->updateServers();
-            _hmi->updateParams();
-        }
-        udatePostingParams();
-
-        // check if the nzb file name already exist
-        QString nzbPath = _ngPost->nzbPath();
-        if (!nzbPath.endsWith(".nzb"))
-            nzbPath += ".nzb";
-        QFileInfo fiNzb(nzbPath);
-        if (fiNzb.exists())
-        {
-            int overwrite = QMessageBox::question(nullptr,
-                                                  tr("Overwrite existing nzb file?"),
-                                                  tr("The nzb file '%1' already exists.\nWould you like to overwrite it ?").arg(nzbPath),
-                                                  QMessageBox::Yes,
-                                                  QMessageBox::No);
-            if (overwrite == QMessageBox::No)
-                return;
-        }
-
-        _postingFinished = false;
-        _state = STATE::POSTING;
-        _postingJob = new PostingJob(_ngPost, nzbPath, files, this,
-                                     _ngPost->getPostingGroups(),
-                                     _ngPost->from(),
-                                     _ngPost->_obfuscateArticles, _ngPost->_obfuscateFileName,
-                                     _ngPost->_tmpPath, _ngPost->_rarPath, _ngPost->_rarArgs,
-                                     _ngPost->_rarSize, _ngPost->_useRarMax, _ngPost->_par2Pct,
-                                     _ngPost->_doCompress, _ngPost->_doPar2,
-                                     _ngPost->_rarName, _ngPost->_rarPass,
-                                     _ngPost->_keepRar);
-
-        bool hasStarted = _ngPost->startPostingJob(_postingJob);
-
-        QString buttonTxt;
-        QColor  tabColor;
-        QString tabIcon;
-        if (hasStarted)
-        {
-            buttonTxt = tr("Stop Posting");
-            tabColor  = _hmi->sPostingColor;
-            tabIcon   = _hmi->sPostingIcon;
-        }
-        else
-        {
-            buttonTxt = tr("Cancel Posting");
-            tabColor  = _hmi->sPendingColor;
-            tabIcon   = _hmi->sPendingIcon;
-        }
-        _ui->postButton->setText(buttonTxt);
-        _hmi->updateJobTab(this, tabColor, QIcon(tabIcon), _postingJob->nzbName());
-    }
-    else  if (_state == STATE::POSTING)
+        _hmi->startSessions({this}, true);
+    else if (_state == STATE::POSTING && _postingJob)
     {
         _state = STATE::STOPPING;
         emit _postingJob->stopPosting();
     }
 }
 
+bool PostingWidget::readyForBatch(bool includeCompleted) const
+{
+    return _state == STATE::IDLE && !_postingJob && (includeCompleted || !_postingFinished)
+           && _ui->filesList->count() > 0;
+}
 
+QString PostingWidget::effectiveArchivePassword() const
+{
+    const QString password = _ui->nzbPassCB->isChecked() ? _ui->nzbPassEdit->text() : QString();
+    // An explicitly supplied password may describe an already archived input file.
+    if (!_ui->compressCB->isChecked()) return password;
+    return password.isEmpty() && _hmi ? _hmi->fixedArchivePassword() : password;
+}
+
+PostingJob *PostingWidget::preparePosting(QString &error)
+{
+    if (!readyForBatch(true)) { error = tr("Session is empty or already started."); return nullptr; }
+    QFileInfoList files;
+    for (int i = 0; i < _ui->filesList->count(); ++i)
+        files << QFileInfo(_ui->filesList->item(i)->text());
+    udatePostingParams();
+    QString target = _ngPost->nzbPath();
+    if (!target.endsWith(".nzb", Qt::CaseInsensitive)) target += ".nzb";
+    return new PostingJob(_ngPost, target, files, this,
+                          _ngPost->getPostingGroups(), _ngPost->from(),
+                          _ngPost->_obfuscateArticles, _ngPost->_obfuscateFileName,
+                          _ngPost->_tmpPath, _ngPost->_rarPath, _ngPost->_rarArgs,
+                          _ngPost->_rarSize, _ngPost->_useRarMax, _ngPost->_par2Pct,
+                          _ngPost->_doCompress, _ngPost->_doPar2,
+                          _ngPost->_rarName, _ngPost->_rarPass, _ngPost->_keepRar,
+                          false, false);
+}
+
+void PostingWidget::enqueuePrepared(PostingJob *job)
+{
+    _postingJob = job;
+    _postingFinished = false;
+    _state = STATE::POSTING;
+    _lastNzbName = QFileInfo(job->nzbFilePath()).fileName();
+    _lastArchiveName = job->hasCompressed() ? job->rarName() : QString();
+    _lastArchivePassword = job->rarPass();
+    _hasFinalMetadata = true;
+    const bool started = _ngPost->startPostingJob(job);
+    _ui->postButton->setText(started ? tr("Stop Posting") : tr("Cancel Posting"));
+    _hmi->updateJobTab(this, started ? _hmi->sPostingColor : _hmi->sPendingColor,
+                      QIcon(started ? _hmi->sPostingIcon : _hmi->sPendingIcon), job->nzbName());
+}
 void PostingWidget::onNzbPassToggled(bool checked)
 {
     if (_ngPost)
@@ -456,6 +457,9 @@ void PostingWidget::_buildFilesList(QFileInfoList &files, bool &hasFolder)
 
 void PostingWidget::init()
 {
+    if (_initialized)
+        return;
+    _initialized = true;
     auto compactButton = [](QWidget *button, int minWidth, int height) {
         if (!button)
             return;
@@ -666,12 +670,7 @@ void PostingWidget::udatePostingParams()
     _ngPost->_quickPostArchivePassword = _ui->nzbPassCB->isChecked();
     _ngPost->_detectBundledArchiver();
     _ngPost->_rarName    = _ui->compressNameEdit->text();
-    QString effectiveArchivePassword;
-    if (_ui->nzbPassCB->isChecked())
-        effectiveArchivePassword = _ui->nzbPassEdit->text();
-    if (effectiveArchivePassword.isEmpty())
-        effectiveArchivePassword = _hmi ? _hmi->fixedArchivePassword() : QString();
-    _ngPost->_rarPass = effectiveArchivePassword;
+    _ngPost->_rarPass = effectiveArchivePassword();
     _ngPost->_lengthName = static_cast<uint>(_ui->nameLengthSB->value());
     _ngPost->_lengthPass = static_cast<uint>(_ui->passLengthSB->value());
     uint val = 0;
@@ -696,6 +695,14 @@ void PostingWidget::udatePostingParams()
 void PostingWidget::retranslate()
 {
     _ui->retranslateUi(this);
+    const QList<QPair<const char *, QString>> actions = {
+        {"copyNzbButton", tr("Copy NZB filename")}, {"copyArchiveButton", tr("Copy archive name")},
+        {"copyPasswordButton", tr("Copy archive password")}
+    };
+    for (const auto &action : actions) {
+        auto *button = findChild<QPushButton *>(action.first);
+        button->setText(tr("Copy")); button->setToolTip(action.second); button->setAccessibleName(action.second);
+    }
     const QString archiverToolTip = _ngPost->_rarPath.isEmpty()
             ? tr("The archiver is detected automatically next to ngPost.exe.")
             : tr("Detected automatically: %1").arg(_ngPost->_rarPath);

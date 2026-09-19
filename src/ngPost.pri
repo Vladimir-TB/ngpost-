@@ -1,6 +1,7 @@
-QT += core network
+QT += core network concurrent
 
-DEFINES += "APP_VERSION=\"5.1.1\""
+DEFINES += "APP_VERSION=\"5.1.2-rc1\""
+VERSION = 5.1.2.0
 
 INCLUDEPATH += $$PWD
 TARGET = ngPost

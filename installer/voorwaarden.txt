@@ -1,2 +1,5 @@
-Let op!! Wij zijn niet verantwoordelijk voor misbruik van de app.
-Het uploaden van ongeautoriseerd materiaal is niet toegestaan.
+Je bent verantwoordelijk voor wat je met ngPost+ uploadt. Plaats alleen materiaal waarvoor je de benodigde verspreidingsrechten hebt, bijvoorbeeld eigen werk of materiaal waarvoor de rechthebbende toestemming heeft gegeven.
+
+ngPost+ verleent geen rechten op materiaal van derden. Upload geen materiaal in strijd met het auteursrecht of andere toepasselijke wetgeving. De app biedt geen garantie op anonimiteit.
+
+Deze gebruiksmelding beperkt geen aansprakelijkheid die volgens de wet niet kan worden uitgesloten. De GPLv3-licentie van ngPost+ en de afzonderlijke licenties van meegeleverde onderdelen blijven van toepassing; deze melding beperkt de daarin verleende rechten niet.

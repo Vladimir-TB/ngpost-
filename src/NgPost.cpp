@@ -1064,45 +1064,7 @@ qDebug() << "[MB_TRACE][Issue#82][NgPost::onPostingJobFinished] job: " << job
             else
                 emit _activeJob->startPosting(true);
         }
-        else if (_doShutdownWhenDone && !_shutdownCmd.isEmpty())
-        {
-            //cf https://forum.qt.io/topic/111602/qprocess-signals-not-received-in-slots-except-in-debug-with-breakpoints/
-//            int exitCode = QProcess::execute("echo \\\"toto\\\" | /usr/bin/sudo -S /bin/ls -al");
-//            qDebug() << QString("Shutdown exit code: %1").arg(exitCode);
-            _shutdownProc = new QProcess();
-            connect(_shutdownProc, &QProcess::readyReadStandardOutput, this, &NgPost::onShutdownProcReadyReadStandardOutput, Qt::DirectConnection);
-            connect(_shutdownProc, &QProcess::readyReadStandardError,  this, &NgPost::onShutdownProcReadyReadStandardError,  Qt::DirectConnection);
-            connect(_shutdownProc, static_cast<void(QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished), this, &NgPost::onShutdownProcFinished, Qt::QueuedConnection);
-//            connect(_shutdownProc, &QProcess::started, this, &NgPost::onShutdownProcStarted, Qt::DirectConnection);
-//            connect(_shutdownProc, &QProcess::stateChanged,  this, &NgPost::onShutdownProcStateChanged,  Qt::DirectConnection);
-#if QT_VERSION >= QT_VERSION_CHECK(5, 6, 0)
-            connect(_shutdownProc, &QProcess::errorOccurred,  this, &NgPost::onShutdownProcError, Qt::DirectConnection);
-#endif
-//            _shutdownProc->start("/bin/ls", QStringList() << "-al");
-//            _shutdownProc->start("/usr/bin/sudo", QStringList() << "-n" << "/sbin/poweroff");
-
-//            qDebug() << " cmd: " << _shutdownCmd;
-
-//            QStringList args = _shutdownCmd.split(QRegularExpression("\\s+"));
-#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
-            QStringList args = parseCombinedArgString(_shutdownCmd);
-#else
-            QStringList args = QProcess::splitCommand(_shutdownCmd);
-#endif
-            QString     cmd  = args.takeFirst();
-            qDebug() << "cmd: " << cmd << ", args: " << args;
-            _shutdownProc->start(cmd, args);
-        }
-#ifdef __USE_HMI__
-        else if (!_folderMonitor && !_hmi)
-#else
-        else if (!_folderMonitor)
-#endif
-        {
-	    if( debugFull())
-                _error(tr(" => closing application"));
-            qApp->quit();
-        }
+        else finishQueueIfIdle();
     }
     else if (_preparePacking && job ==_packingJob)
     {
@@ -1235,8 +1197,8 @@ QString NgPost::randomPass(uint length) const
 
 void NgPost::closeAllPostingJobs()
 {
-    qDeleteAll(_pendingJobs);
-    _pendingJobs.clear();
+    const auto pending = _pendingJobs;
+    for (PostingJob *job : pending) emit job->stopPosting();
     if (_activeJob)
         _activeJob->onStopPosting();
 }
@@ -3266,3 +3228,66 @@ const QString NgPost::sNgPostASCII = QString("\
      |___|  /\\___  /|____|   \\____/____  > |__|\n\
           \\//_____/                    \\/\n\
 ");
+
+void NgPost::endBatchPreparation()
+{
+    if (_batchPreparations > 0) --_batchPreparations;
+    if (!_batchPreparations && _deferredQueueFinish) {
+        _deferredQueueFinish = false;
+        finishQueueIfIdle();
+    }
+}
+
+QStringList NgPost::reservedNzbPaths() const
+{
+    QStringList paths;
+    if (_activeJob) paths << _activeJob->nzbFilePath();
+    for (PostingJob *job : _pendingJobs) paths << job->nzbFilePath();
+    return paths;
+}
+
+void NgPost::finishQueueIfIdle()
+{
+    if (_activeJob || !_pendingJobs.isEmpty()) return;
+    if (_batchPreparations) { _deferredQueueFinish = true; return; }
+    if (_doShutdownWhenDone && !_shutdownCmd.isEmpty())
+        {
+            //cf https://forum.qt.io/topic/111602/qprocess-signals-not-received-in-slots-except-in-debug-with-breakpoints/
+//            int exitCode = QProcess::execute("echo \\\"toto\\\" | /usr/bin/sudo -S /bin/ls -al");
+//            qDebug() << QString("Shutdown exit code: %1").arg(exitCode);
+            _shutdownProc = new QProcess();
+            connect(_shutdownProc, &QProcess::readyReadStandardOutput, this, &NgPost::onShutdownProcReadyReadStandardOutput, Qt::DirectConnection);
+            connect(_shutdownProc, &QProcess::readyReadStandardError,  this, &NgPost::onShutdownProcReadyReadStandardError,  Qt::DirectConnection);
+            connect(_shutdownProc, static_cast<void(QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished), this, &NgPost::onShutdownProcFinished, Qt::QueuedConnection);
+//            connect(_shutdownProc, &QProcess::started, this, &NgPost::onShutdownProcStarted, Qt::DirectConnection);
+//            connect(_shutdownProc, &QProcess::stateChanged,  this, &NgPost::onShutdownProcStateChanged,  Qt::DirectConnection);
+#if QT_VERSION >= QT_VERSION_CHECK(5, 6, 0)
+            connect(_shutdownProc, &QProcess::errorOccurred,  this, &NgPost::onShutdownProcError, Qt::DirectConnection);
+#endif
+//            _shutdownProc->start("/bin/ls", QStringList() << "-al");
+//            _shutdownProc->start("/usr/bin/sudo", QStringList() << "-n" << "/sbin/poweroff");
+
+//            qDebug() << " cmd: " << _shutdownCmd;
+
+//            QStringList args = _shutdownCmd.split(QRegularExpression("\\s+"));
+#if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
+            QStringList args = parseCombinedArgString(_shutdownCmd);
+#else
+            QStringList args = QProcess::splitCommand(_shutdownCmd);
+#endif
+            QString     cmd  = args.takeFirst();
+            qDebug() << "cmd: " << cmd << ", args: " << args;
+            _shutdownProc->start(cmd, args);
+        }
+#ifdef __USE_HMI__
+        else if (!_folderMonitor && !_hmi)
+#else
+        else if (!_folderMonitor)
+#endif
+        {
+	    if( debugFull())
+                _error(tr(" => closing application"));
+            qApp->quit();
+        }
+
+}

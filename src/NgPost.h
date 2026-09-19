@@ -230,6 +230,8 @@ private:
 
     QStringList _nzbPostCmd;
     bool        _preparePacking;
+    int _batchPreparations = 0;
+    bool _deferredQueueFinish = false;
 
     GROUP_POLICY _groupPolicy;
 
@@ -320,6 +322,10 @@ private:
 
 public:
     explicit NgPost(int &argc, char *argv[]);
+    void beginBatchPreparation() { ++_batchPreparations; }
+    void endBatchPreparation();
+    QStringList reservedNzbPaths() const;
+    void finishQueueIfIdle();
     ~NgPost() override;
 
     // pure virtual from CmdOrGuiApp

@@ -31,6 +31,11 @@
 </context>
 <context>
     <name>AutoPostWidget</name>
+    <message><source>Adding folders...</source><translation>Mappen toevoegen...</translation></message>
+    <message><source>Cancel</source><translation>Annuleren</translation></message>
+    <message><source>Preparing sessions...</source><translation>Sessies voorbereiden...</translation></message>
+    <message><source>Reading folders...</source><translation>Mappen lezen...</translation></message>
+    <message><source>No readable files or folders were found.</source><translation>Geen leesbare bestanden of mappen gevonden.</translation></message>
     <message>
         <location filename="../hmi/AutoPostWidget.ui" line="14"/>
         <source>Form</source>
@@ -460,6 +465,11 @@ Bestanden worden definitief verwijderd...</translation>
 </context>
 <context>
     <name>MainWindow</name>
+    <message><source>Queue ready sessions in tab order. Uploads run one at a time.</source><translation>Zet voorbereide sessies in tabvolgorde in de wachtrij. Uploads worden achter elkaar uitgevoerd.</translation></message>
+    <message><source>Start all prepared sessions sequentially in tab order.</source><translation>Start alle voorbereide sessies achter elkaar in tabvolgorde.</translation></message>
+    <message><source>You are responsible for what you upload. Only post material you have the right to distribute.</source><translation>Je bent verantwoordelijk voor wat je uploadt. Plaats alleen materiaal waarvoor je de verspreidingsrechten hebt.</translation></message>
+    <message><source>ngPost+ does not grant rights to third-party material. This notice does not limit any liability that cannot legally be excluded.</source><translation>ngPost+ verleent geen rechten op materiaal van derden. Deze melding beperkt geen aansprakelijkheid die wettelijk niet kan worden uitgesloten.</translation></message>
+    <message><source>Start all sessions</source><translation>Alle sessies starten</translation></message>
     <message>
         <location filename="../hmi/MainWindow.ui" line="57"/>
         <source>Add a server (you can use as many as you want)</source>
@@ -2631,6 +2641,8 @@ Gebruik --par2_pct of stel PAR2_PCT of PAR2_ARGS in het configuratiebestand in.<
 </context>
 <context>
     <name>PostingJob</name>
+    <message><source>Could not start the parity tool.</source><translation>Het PAR2-programma kon niet worden gestart.</translation></message>
+    <message><source>Could not start the archive tool.</source><translation>Het archiefprogramma kon niet worden gestart.</translation></message>
     <message>
         <location filename="../PostingJob.cpp" line="183"/>
         <source>Try to resume posting</source>
@@ -2905,6 +2917,11 @@ Gebruik --par2_pct of stel PAR2_PCT of PAR2_ARGS in het configuratiebestand in.<
 </context>
 <context>
     <name>PostingWidget</name>
+    <message><source>Copied</source><translation>Gekopieerd</translation></message>
+    <message><source>Copy</source><translation>Kopieer</translation></message>
+    <message><source>Copy archive name</source><translation>Kopieer archiefnaam</translation></message>
+    <message><source>Copy NZB filename</source><translation>Kopieer NZB-bestandsnaam</translation></message>
+    <message><source>Copy archive password</source><translation>Kopieer archiefwachtwoord</translation></message>
     <message>
         <location filename="../hmi/PostingWidget.ui" line="14"/>
         <source>Form</source>
@@ -3219,6 +3236,20 @@ Wil je het overschrijven?</translation>
         <source>Bare in mind you can select items in the list and press DEL to remove them</source>
         <translation>Weet dat je items in de lijst kunt selecteren en op DEL kunt drukken om ze te verwijderen</translation>
     </message>
+</context>
+<context><name>SessionBatch</name>
+    <message><source>The NZB filename already exists or is reserved by another session:
+%1</source><translation>De NZB-bestandsnaam bestaat al of is gereserveerd voor een andere sessie:
+%1</translation></message>
+    <message><source>Overwrite</source><translation>Overschrijven</translation></message>
+    <message><source>Unique name</source><translation>Unieke naam</translation></message>
+    <message><source>NZB filename conflict</source><translation>NZB-bestandsnaam bestaat al</translation></message>
+    <message><source>Apply to all conflicts</source><translation>Toepassen op alle conflicten</translation></message>
+    <message><source>Cancel batch</source><translation>Batch annuleren</translation></message>
+    <message><source>Validating sessions...</source><translation>Sessies controleren...</translation></message>
+    <message><source>Session skipped: %1</source><translation>Sessie overgeslagen: %1</translation></message>
+    <message><source>%1 session(s) skipped during validation.</source><translation>%1 sessie(s) overgeslagen bij de controle.</translation></message>
+    <message><source>Skip</source><translation>Overslaan</translation></message>
 </context>
 </TS>
 

@@ -18,6 +18,8 @@
 //========================================================================
 
 #include "Poster.h"
+#include <QTimer>
+#include <memory>
 #include "NgPost.h"
 #include "PostingJob.h"
 #include "ArticleBuilder.h"
@@ -182,4 +184,20 @@ void Poster::stopThreads()
 
     if (_ngPost->debugMode())
         _job->_log(QString("[Poster #%1] threads stopped").arg(_id));
+}
+
+void Poster::stopThreadsAsync(QObject *context, std::function<void()> finished)
+{
+    auto notified = std::make_shared<bool>(false);
+    auto notify = [this, notified, finished] {
+        if (!*notified && !_builderThread.isRunning() && !_connectionsThread.isRunning()) {
+            *notified = true;
+            finished();
+        }
+    };
+    QObject::connect(&_builderThread, &QThread::finished, context, notify, Qt::QueuedConnection);
+    QObject::connect(&_connectionsThread, &QThread::finished, context, notify, Qt::QueuedConnection);
+    _builderThread.quit();
+    _connectionsThread.quit();
+    QTimer::singleShot(0, context, notify);
 }

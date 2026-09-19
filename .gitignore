@@ -11,6 +11,7 @@ qrc_resources.cpp
 /build-qt6/
 /dist-qt6/
 /artifacts/
+/release/
 
 # local tooling
 /.qt/

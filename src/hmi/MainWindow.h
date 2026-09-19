@@ -53,6 +53,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 private:
+    bool _closingAfterPosts = false;
     enum class STATE {IDLE, POSTING, STOPPING};
     enum class ShellView { Overview, QuickPost, AutoPosting, Activity };
 
@@ -153,7 +154,9 @@ public:
 
     QString fixedArchivePassword() const;
 
-    PostingWidget *addNewQuickTab(int lastTabIdx, const QFileInfoList &files = QFileInfoList());
+    PostingWidget *addNewQuickTab(int lastTabIdx, const QFileInfoList &files = QFileInfoList(), bool activate = true);
+    void finishAddingTabs();
+    void startSessions(const QList<PostingWidget *> &sessions, bool includeCompleted = false);
 
     void setTab(QWidget *postWidget);
     void clearJobTab(QWidget *postWidget);
